@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/medicine_bloc.dart';
 import '../bloc/medicine_state.dart';
 import '../bloc/medicine_event.dart';
+import 'add_medicine_screen.dart';
 
 class MedicineListScreen extends StatelessWidget {
   final String currentUserId; // For demonstration.
@@ -49,9 +50,10 @@ class MedicineListScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigation to AddMedicineScreen would happen here
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add Medicine feature coming next...')),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AddMedicineScreen(currentUserId: currentUserId), // pass ID
+            ),
           );
         },
         child: const Icon(Icons.add),

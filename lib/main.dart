@@ -17,7 +17,7 @@ import 'features/medicine/domain/repositories/medicine_repository.dart';
 import 'features/medicine/presentation/bloc/medicine_bloc.dart';
 import 'features/medicine/presentation/bloc/medicine_event.dart';
 import 'features/medicine/presentation/pages/medicine_list_screen.dart';
-
+import 'features/home/presentation/pages/main_layout_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -61,7 +61,7 @@ class RemindRxApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
           useMaterial3: true,
         ),
-        home: const MedicineListScreen(currentUserId: 'user_1'),
+        home: const MainLayoutScreen(currentUserId: 'user_1'),
       ),
     );
   }
