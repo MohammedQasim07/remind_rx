@@ -1,6 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../features/medicine/presentation/pages/medicine_list_screen.dart';
 import 'dashboard_screen.dart';
+import '../../../dose_history/presentation/pages/daily_tracker_screen.dart';
 
 class MainLayoutScreen extends StatefulWidget {
   final String currentUserId;
@@ -21,8 +24,8 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
     super.initState();
     _pages = [
       DashboardScreen(currentUserId: widget.currentUserId),
+      DailyTrackerScreen(userId: widget.currentUserId),
       MedicineListScreen(currentUserId: widget.currentUserId),
-      const Center(child: Text('Schedule Screen Coming Soon')),
       const Center(child: Text('Settings Screen Coming Soon')),
     ];
   }
@@ -30,38 +33,77 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      extendBody: true, // Crucial for floating nav over content
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.meshBackgroundGradient,
+        ),
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+          height: 70,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            color: Colors.transparent,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.medical_services_outlined),
-            selectedIcon: Icon(Icons.medical_services),
-            label: 'Medicines',
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard, 'Home'),
+                    _buildNavItem(1, Icons.today_outlined, Icons.today, 'Tracker'),
+                    _buildNavItem(2, Icons.medication_outlined, Icons.medication, 'Meds'),
+                    _buildNavItem(3, Icons.settings_outlined, Icons.settings, 'Settings'),
+                  ],
+                ),
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Schedule',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
+    bool isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSelected ? activeIcon : icon,
+            color: isSelected ? AppTheme.primaryGreen : AppTheme.textGrey,
+            size: 26,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
+          if (isSelected)
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(color: AppTheme.primaryGreen, shape: BoxShape.circle),
+            ),
         ],
       ),
     );

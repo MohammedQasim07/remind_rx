@@ -24,12 +24,12 @@ class LoginRequest {
 @JsonSerializable()
 class RegisterRequest {
   final String email;
-  final String phoneCountryCode;
-  final String phone;
+  final String? phoneCountryCode;
+  final String? phone;
   final String? password;
   final String? name;
-  final Role role;
-  final Gender gender;
+  final Role? role;
+  final Gender? gender;
   final DateTime? dateOfBirth;
   final String? nationality;
   final String? city;
@@ -38,12 +38,12 @@ class RegisterRequest {
 
   RegisterRequest({
     required this.email,
-    required this.phoneCountryCode,
-    required this.phone,
+    this.phoneCountryCode,
+    this.phone,
     this.password,
     this.name,
-    required this.role,
-    required this.gender,
+    this.role,
+    this.gender,
     this.dateOfBirth,
     this.nationality,
     this.city,
@@ -56,9 +56,27 @@ class RegisterRequest {
 }
 
 @JsonSerializable()
+class AuthData {
+  final String userId;
+  final String name;
+  final String? role;
+  final String? token;
+
+  AuthData({
+    required this.userId,
+    required this.name,
+    this.role,
+    this.token,
+  });
+
+  factory AuthData.fromJson(Map<String, dynamic> json) => _$AuthDataFromJson(json);
+  Map<String, dynamic> toJson() => _$AuthDataToJson(this);
+}
+
+@JsonSerializable()
 class AuthResponse {
   final bool isSuccess;
-  final String? data; // Holds the JWT token
+  final AuthData? data; // Holds the AuthData object
   final String? msg;
   final int statusCode;
 

@@ -24,12 +24,12 @@ Map<String, dynamic> _$LoginRequestToJson(LoginRequest instance) =>
 RegisterRequest _$RegisterRequestFromJson(Map<String, dynamic> json) =>
     RegisterRequest(
       email: json['email'] as String,
-      phoneCountryCode: json['phoneCountryCode'] as String,
-      phone: json['phone'] as String,
+      phoneCountryCode: json['phoneCountryCode'] as String?,
+      phone: json['phone'] as String?,
       password: json['password'] as String?,
       name: json['name'] as String?,
-      role: $enumDecode(_$RoleEnumMap, json['role']),
-      gender: $enumDecode(_$GenderEnumMap, json['gender']),
+      role: $enumDecodeNullable(_$RoleEnumMap, json['role']),
+      gender: $enumDecodeNullable(_$GenderEnumMap, json['gender']),
       dateOfBirth: json['dateOfBirth'] == null
           ? null
           : DateTime.parse(json['dateOfBirth'] as String),
@@ -46,8 +46,8 @@ Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
       'phone': instance.phone,
       'password': instance.password,
       'name': instance.name,
-      'role': _$RoleEnumMap[instance.role]!,
-      'gender': _$GenderEnumMap[instance.gender]!,
+      'role': _$RoleEnumMap[instance.role],
+      'gender': _$GenderEnumMap[instance.gender],
       'dateOfBirth': instance.dateOfBirth?.toIso8601String(),
       'nationality': instance.nationality,
       'city': instance.city,
@@ -67,9 +67,25 @@ const _$GenderEnumMap = {
   Gender.other: 2,
 };
 
+AuthData _$AuthDataFromJson(Map<String, dynamic> json) => AuthData(
+      userId: json['userId'] as String,
+      name: json['name'] as String,
+      role: json['role'] as String?,
+      token: json['token'] as String?,
+    );
+
+Map<String, dynamic> _$AuthDataToJson(AuthData instance) => <String, dynamic>{
+      'userId': instance.userId,
+      'name': instance.name,
+      'role': instance.role,
+      'token': instance.token,
+    };
+
 AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) => AuthResponse(
       isSuccess: json['isSuccess'] as bool,
-      data: json['data'] as String?,
+      data: json['data'] == null
+          ? null
+          : AuthData.fromJson(json['data'] as Map<String, dynamic>),
       msg: json['msg'] as String?,
       statusCode: (json['statusCode'] as num).toInt(),
     );
