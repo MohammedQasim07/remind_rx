@@ -1,5 +1,5 @@
 import '../entities/dose_history.dart';
-import '../../schedule/domain/entities/schedule.dart';
+import '../../../schedule/domain/entities/schedule.dart';
 
 abstract class GenerateDoseHistoryUseCase {
   /// Evaluates a `Schedule` and generates `DoseHistory` entities for a specific time window.

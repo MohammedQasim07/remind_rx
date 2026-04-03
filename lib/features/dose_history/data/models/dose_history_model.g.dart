@@ -32,24 +32,29 @@ const DoseHistoryModelSchema = CollectionSchema(
       name: r'medicineId',
       type: IsarType.string,
     ),
-    r'scheduleId': PropertySchema(
+    r'notes': PropertySchema(
       id: 3,
+      name: r'notes',
+      type: IsarType.string,
+    ),
+    r'scheduleId': PropertySchema(
+      id: 4,
       name: r'scheduleId',
       type: IsarType.string,
     ),
     r'scheduledTime': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'scheduledTime',
       type: IsarType.dateTime,
     ),
     r'status': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'status',
       type: IsarType.byte,
       enumMap: _DoseHistoryModelstatusEnumValueMap,
     ),
     r'userId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'userId',
       type: IsarType.string,
     )
@@ -142,8 +147,19 @@ int _doseHistoryModelEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.medicineId.length * 3;
+  {
+    final value = object.notes;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.scheduleId.length * 3;
-  bytesCount += 3 + object.userId.length * 3;
+  {
+    final value = object.userId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -156,10 +172,11 @@ void _doseHistoryModelSerialize(
   writer.writeDateTime(offsets[0], object.actualTime);
   writer.writeString(offsets[1], object.id);
   writer.writeString(offsets[2], object.medicineId);
-  writer.writeString(offsets[3], object.scheduleId);
-  writer.writeDateTime(offsets[4], object.scheduledTime);
-  writer.writeByte(offsets[5], object.status.index);
-  writer.writeString(offsets[6], object.userId);
+  writer.writeString(offsets[3], object.notes);
+  writer.writeString(offsets[4], object.scheduleId);
+  writer.writeDateTime(offsets[5], object.scheduledTime);
+  writer.writeByte(offsets[6], object.status.index);
+  writer.writeString(offsets[7], object.userId);
 }
 
 DoseHistoryModel _doseHistoryModelDeserialize(
@@ -173,12 +190,13 @@ DoseHistoryModel _doseHistoryModelDeserialize(
   object.id = reader.readString(offsets[1]);
   object.isarId = id;
   object.medicineId = reader.readString(offsets[2]);
-  object.scheduleId = reader.readString(offsets[3]);
-  object.scheduledTime = reader.readDateTime(offsets[4]);
+  object.notes = reader.readStringOrNull(offsets[3]);
+  object.scheduleId = reader.readString(offsets[4]);
+  object.scheduledTime = reader.readDateTime(offsets[5]);
   object.status =
-      _DoseHistoryModelstatusValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+      _DoseHistoryModelstatusValueEnumMap[reader.readByteOrNull(offsets[6])] ??
           DoseStatus.scheduled;
-  object.userId = reader.readString(offsets[6]);
+  object.userId = reader.readStringOrNull(offsets[7]);
   return object;
 }
 
@@ -196,15 +214,17 @@ P _doseHistoryModelDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readDateTime(offset)) as P;
+    case 6:
       return (_DoseHistoryModelstatusValueEnumMap[
               reader.readByteOrNull(offset)] ??
           DoseStatus.scheduled) as P;
-    case 6:
-      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -515,7 +535,29 @@ extension DoseHistoryModelQueryWhere
   }
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterWhereClause>
-      userIdEqualTo(String userId) {
+      userIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterWhereClause>
+      userIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'userId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterWhereClause>
+      userIdEqualTo(String? userId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
         indexName: r'userId',
@@ -525,7 +567,7 @@ extension DoseHistoryModelQueryWhere
   }
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterWhereClause>
-      userIdNotEqualTo(String userId) {
+      userIdNotEqualTo(String? userId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -1058,6 +1100,160 @@ extension DoseHistoryModelQueryFilter
   }
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notes',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
       scheduleIdEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1306,8 +1502,26 @@ extension DoseHistoryModelQueryFilter
   }
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      userIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
+      userIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
       userIdEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1321,7 +1535,7 @@ extension DoseHistoryModelQueryFilter
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
       userIdGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1337,7 +1551,7 @@ extension DoseHistoryModelQueryFilter
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
       userIdLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1353,8 +1567,8 @@ extension DoseHistoryModelQueryFilter
 
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterFilterCondition>
       userIdBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1491,6 +1705,19 @@ extension DoseHistoryModelQuerySortBy
     });
   }
 
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterSortBy> sortByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterSortBy>
+      sortByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterSortBy>
       sortByScheduleId() {
     return QueryBuilder.apply(this, (query) {
@@ -1605,6 +1832,19 @@ extension DoseHistoryModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterSortBy> thenByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterSortBy>
+      thenByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QAfterSortBy>
       thenByScheduleId() {
     return QueryBuilder.apply(this, (query) {
@@ -1685,6 +1925,13 @@ extension DoseHistoryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<DoseHistoryModel, DoseHistoryModel, QDistinct> distinctByNotes(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<DoseHistoryModel, DoseHistoryModel, QDistinct>
       distinctByScheduleId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1742,6 +1989,12 @@ extension DoseHistoryModelQueryProperty
     });
   }
 
+  QueryBuilder<DoseHistoryModel, String?, QQueryOperations> notesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notes');
+    });
+  }
+
   QueryBuilder<DoseHistoryModel, String, QQueryOperations>
       scheduleIdProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1763,9 +2016,47 @@ extension DoseHistoryModelQueryProperty
     });
   }
 
-  QueryBuilder<DoseHistoryModel, String, QQueryOperations> userIdProperty() {
+  QueryBuilder<DoseHistoryModel, String?, QQueryOperations> userIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'userId');
     });
   }
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+DoseHistoryModel _$DoseHistoryModelFromJson(Map<String, dynamic> json) =>
+    DoseHistoryModel()
+      ..isarId = (json['isarId'] as num).toInt()
+      ..id = json['id'] as String
+      ..scheduleId = json['scheduleId'] as String
+      ..medicineId = json['medicineId'] as String
+      ..userId = json['userId'] as String?
+      ..scheduledTime = DateTime.parse(json['scheduledTime'] as String)
+      ..actualTime = json['actualTime'] == null
+          ? null
+          : DateTime.parse(json['actualTime'] as String)
+      ..status = $enumDecode(_$DoseStatusEnumMap, json['status'])
+      ..notes = json['notes'] as String?;
+
+Map<String, dynamic> _$DoseHistoryModelToJson(DoseHistoryModel instance) =>
+    <String, dynamic>{
+      'isarId': instance.isarId,
+      'id': instance.id,
+      'scheduleId': instance.scheduleId,
+      'medicineId': instance.medicineId,
+      'userId': instance.userId,
+      'scheduledTime': instance.scheduledTime.toIso8601String(),
+      'actualTime': instance.actualTime?.toIso8601String(),
+      'status': _$DoseStatusEnumMap[instance.status]!,
+      'notes': instance.notes,
+    };
+
+const _$DoseStatusEnumMap = {
+  DoseStatus.scheduled: 0,
+  DoseStatus.taken: 1,
+  DoseStatus.missed: 2,
+  DoseStatus.skipped: 3,
+};

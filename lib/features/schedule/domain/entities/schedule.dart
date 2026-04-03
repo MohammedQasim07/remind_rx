@@ -1,33 +1,41 @@
-enum RepeatType { daily, weekly, monthly, custom, none }
+import 'package:json_annotation/json_annotation.dart';
 
-abstract class Schedule {
+enum RepeatType {
+  @JsonValue(0) daily,
+  @JsonValue(1) weekly,
+  @JsonValue(2) monthly,
+  @JsonValue(3) custom,
+  @JsonValue(4) none
+}
+
+class Schedule {
   final String id;
   final String medicineId;
-  final String userId;
+  final String? userId; // Optional for remote sync
   
-  /// Stored in UTC. Represents the date the schedule begins.
   final DateTime startDate;
-  
-  /// Stored in UTC. Null implies the schedule runs indefinitely.
   final DateTime? endDate; 
-  
-  /// Stored in UTC conceptually, representing the target time. 
-  /// UI layer must convert this to local time for display and exact alarm scheduling.
   final DateTime reminderTime; 
-  
   final RepeatType repeatType;
   
-  /// For custom repeat (e.g. Mon, Wed, Fri), uses DateTime.monday etc (1-7).
-  final List<int>? customRepeatDays; 
+  final int? repeatInterval;
+  final String? daysOfWeek; // For weekly/custom, e.g. "1,3,5"
+  final List<int>? customRepeatDays;
+  final bool isActive;
+  final String? notes;
 
   const Schedule({
     required this.id,
     required this.medicineId,
-    required this.userId,
+    this.userId,
     required this.startDate,
     this.endDate,
     required this.reminderTime,
     required this.repeatType,
+    this.repeatInterval,
+    this.daysOfWeek,
     this.customRepeatDays,
+    this.isActive = true,
+    this.notes,
   });
 }

@@ -1,26 +1,49 @@
-enum MedicineType { pill, capsule, liquid, injection, inhaler, drops, other }
-enum MedicineStatus { active, inactive }
+import 'package:json_annotation/json_annotation.dart';
 
-abstract class Medicine {
+enum MedicineType {
+  @JsonValue(0) pill,
+  @JsonValue(1) capsule,
+  @JsonValue(2) liquid,
+  @JsonValue(3) injection,
+  @JsonValue(4) inhaler,
+  @JsonValue(5) drops,
+  @JsonValue(6) cream,
+  @JsonValue(7) other
+}
+
+enum MedicineStatus {
+  @JsonValue(0) active,
+  @JsonValue(1) inactive,
+  @JsonValue(2) completed,
+  @JsonValue(3) deleted
+}
+
+class Medicine {
   final String id;
-  final String userId;
+  final String? userId; // Nullable if not logged in
   final String name;
-  final double dosage;
+  final String? description;
+  final double dosageAmount;
+  final String? dosageUnit;
   final MedicineType type;
   final MedicineStatus status;
-  final String frequency; // e.g., "Twice a day". The exact rules go in Schedule.
-  final int stock;
+  final int frequencyPerDay;
+  final int stockQuantity;
   final int lowStockThreshold;
+  final String? notes;
 
   const Medicine({
     required this.id,
-    required this.userId,
+    this.userId,
     required this.name,
-    required this.dosage,
+    this.description,
+    required this.dosageAmount,
+    this.dosageUnit,
     required this.type,
     required this.status,
-    required this.frequency,
-    required this.stock,
+    required this.frequencyPerDay,
+    required this.stockQuantity,
     required this.lowStockThreshold,
+    this.notes,
   });
 }

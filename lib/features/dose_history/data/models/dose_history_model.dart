@@ -1,9 +1,11 @@
 import 'package:isar/isar.dart';
+import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/dose_history.dart';
 
 part 'dose_history_model.g.dart';
 
 @collection
+@JsonSerializable()
 class DoseHistoryModel {
   Id isarId = Isar.autoIncrement;
 
@@ -17,7 +19,7 @@ class DoseHistoryModel {
   late String medicineId;
 
   @Index()
-  late String userId;
+  String? userId;
 
   @Index()
   late DateTime scheduledTime;
@@ -26,8 +28,13 @@ class DoseHistoryModel {
 
   @enumerated
   late DoseStatus status;
+  
+  String? notes;
 
   DoseHistoryModel();
+
+  factory DoseHistoryModel.fromJson(Map<String, dynamic> json) => _$DoseHistoryModelFromJson(json);
+  Map<String, dynamic> toJson() => _$DoseHistoryModelToJson(this);
 
   factory DoseHistoryModel.fromEntity(DoseHistory history) {
     return DoseHistoryModel()
@@ -37,7 +44,8 @@ class DoseHistoryModel {
       ..userId = history.userId
       ..scheduledTime = history.scheduledTime
       ..actualTime = history.actualTime
-      ..status = history.status;
+      ..status = history.status
+      ..notes = history.notes;
   }
 
   DoseHistory toEntity() {
@@ -49,6 +57,7 @@ class DoseHistoryModel {
       scheduledTime: scheduledTime,
       actualTime: actualTime,
       status: status,
+      notes: notes,
     );
   }
 }
@@ -58,9 +67,10 @@ class _DoseHistoryImpl extends DoseHistory {
     required super.id,
     required super.scheduleId,
     required super.medicineId,
-    required super.userId,
+    super.userId,
     required super.scheduledTime,
     super.actualTime,
     required super.status,
+    super.notes,
   });
 }

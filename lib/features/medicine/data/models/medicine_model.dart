@@ -1,9 +1,11 @@
 import 'package:isar/isar.dart';
+import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/medicine.dart';
 
 part 'medicine_model.g.dart';
 
 @collection
+@JsonSerializable()
 class MedicineModel {
   Id isarId = Isar.autoIncrement;
 
@@ -11,10 +13,15 @@ class MedicineModel {
   late String id;
 
   @Index()
-  late String userId;
+  String? userId;
 
   late String name;
-  late double dosage;
+  String? description;
+  
+  @JsonKey(name: 'dosageAmount')
+  late double dosageAmount;
+  
+  String? dosageUnit;
   
   @enumerated
   late MedicineType type;
@@ -22,23 +29,34 @@ class MedicineModel {
   @enumerated
   late MedicineStatus status;
 
-  late String frequency;
-  late int stock;
+  @JsonKey(name: 'frequencyPerDay')
+  late int frequencyPerDay;
+  
+  @JsonKey(name: 'stockQuantity')
+  late int stockQuantity;
+  
   late int lowStockThreshold;
+  String? notes;
 
   MedicineModel();
+
+  factory MedicineModel.fromJson(Map<String, dynamic> json) => _$MedicineModelFromJson(json);
+  Map<String, dynamic> toJson() => _$MedicineModelToJson(this);
 
   factory MedicineModel.fromEntity(Medicine medicine) {
     return MedicineModel()
       ..id = medicine.id
       ..userId = medicine.userId
       ..name = medicine.name
-      ..dosage = medicine.dosage
+      ..description = medicine.description
+      ..dosageAmount = medicine.dosageAmount
+      ..dosageUnit = medicine.dosageUnit
       ..type = medicine.type
       ..status = medicine.status
-      ..frequency = medicine.frequency
-      ..stock = medicine.stock
-      ..lowStockThreshold = medicine.lowStockThreshold;
+      ..frequencyPerDay = medicine.frequencyPerDay
+      ..stockQuantity = medicine.stockQuantity
+      ..lowStockThreshold = medicine.lowStockThreshold
+      ..notes = medicine.notes;
   }
 
   Medicine toEntity() {
@@ -46,12 +64,15 @@ class MedicineModel {
       id: id,
       userId: userId,
       name: name,
-      dosage: dosage,
+      description: description,
+      dosageAmount: dosageAmount,
+      dosageUnit: dosageUnit,
       type: type,
       status: status,
-      frequency: frequency,
-      stock: stock,
+      frequencyPerDay: frequencyPerDay,
+      stockQuantity: stockQuantity,
       lowStockThreshold: lowStockThreshold,
+      notes: notes,
     );
   }
 }
@@ -59,13 +80,16 @@ class MedicineModel {
 class _MedicineImpl extends Medicine {
   const _MedicineImpl({
     required super.id,
-    required super.userId,
+    super.userId,
     required super.name,
-    required super.dosage,
+    super.description,
+    required super.dosageAmount,
+    super.dosageUnit,
     required super.type,
     required super.status,
-    required super.frequency,
-    required super.stock,
+    required super.frequencyPerDay,
+    required super.stockQuantity,
     required super.lowStockThreshold,
+    super.notes,
   });
 }

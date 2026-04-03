@@ -1,26 +1,31 @@
-enum DoseStatus { scheduled, taken, missed, skipped }
+import 'package:json_annotation/json_annotation.dart';
 
-abstract class DoseHistory {
+enum DoseStatus {
+  @JsonValue(0) scheduled,
+  @JsonValue(1) taken,
+  @JsonValue(2) missed,
+  @JsonValue(3) skipped
+}
+
+class DoseHistory {
   final String id;
   final String scheduleId;
   final String medicineId;
-  final String userId;
+  final String? userId;
   
-  /// Stored in UTC. Exact scheduled time for this specific dose.
   final DateTime scheduledTime;
-  
-  /// Stored in UTC. The actual time the dose was taken/missed. Null if still scheduled.
   final DateTime? actualTime;
-  
   final DoseStatus status;
+  final String? notes;
 
   const DoseHistory({
     required this.id,
     required this.scheduleId,
     required this.medicineId,
-    required this.userId,
+    this.userId,
     required this.scheduledTime,
     this.actualTime,
     required this.status,
+    this.notes,
   });
 }

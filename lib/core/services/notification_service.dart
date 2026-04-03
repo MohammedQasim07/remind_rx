@@ -66,7 +66,7 @@ class NotificationService {
     await _notificationsPlugin.zonedSchedule(
       alarmId,
       'Time for your medicine!',
-      'Please take ${medicine.name} (${medicine.dosage} ${medicine.type.name})',
+      'Please take ${medicine.name} (${medicine.dosageAmount} ${medicine.type.name})',
       tzScheduledTime,
       platformDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

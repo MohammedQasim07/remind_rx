@@ -20,9 +20,11 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
 
   // Form Controllers
   final _nameController = TextEditingController();
-  final _dosageController = TextEditingController();
-  final _frequencyController = TextEditingController();
-  final _stockController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _dosageAmountController = TextEditingController();
+  final _dosageUnitController = TextEditingController();
+  final _frequencyPerDayController = TextEditingController();
+  final _stockQuantityController = TextEditingController();
   final _lowStockThresholdController = TextEditingController();
 
   MedicineType _selectedType = MedicineType.pill;
@@ -30,9 +32,11 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _dosageController.dispose();
-    _frequencyController.dispose();
-    _stockController.dispose();
+    _descriptionController.dispose();
+    _dosageAmountController.dispose();
+    _dosageUnitController.dispose();
+    _frequencyPerDayController.dispose();
+    _stockQuantityController.dispose();
     _lowStockThresholdController.dispose();
     super.dispose();
   }
@@ -52,17 +56,18 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
     }
   }
 
-  // Create a concrete implementation of Medicine since it is an abstract class
   Medicine _createMedicineFromForm() {
     return _MedicineImpl(
-      id: Uuid().v4(), // Generate a unique ID
+      id: const Uuid().v4(),
       userId: widget.currentUserId,
       name: _nameController.text.trim(),
-      dosage: double.tryParse(_dosageController.text) ?? 0.0,
+      description: _descriptionController.text.trim(),
+      dosageAmount: double.tryParse(_dosageAmountController.text) ?? 0.0,
+      dosageUnit: _dosageUnitController.text.trim(),
       type: _selectedType,
       status: MedicineStatus.active,
-      frequency: _frequencyController.text.trim(),
-      stock: int.tryParse(_stockController.text) ?? 0,
+      frequencyPerDay: int.tryParse(_frequencyPerDayController.text) ?? 1,
+      stockQuantity: int.tryParse(_stockQuantityController.text) ?? 0,
       lowStockThreshold: int.tryParse(_lowStockThresholdController.text) ?? 0,
     );
   }
@@ -90,12 +95,20 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                 validator: (value) => value == null || value.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     flex: 2,
                     child: TextFormField(
-                      controller: _dosageController,
+                      controller: _dosageAmountController,
                       decoration: const InputDecoration(
                         labelText: 'Dosage (e.g. 500)',
                         border: OutlineInputBorder(),
@@ -110,46 +123,59 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    flex: 3,
-                    child: DropdownButtonFormField<MedicineType>(
-                      value: _selectedType,
+                    flex: 1,
+                    child: TextFormField(
+                      controller: _dosageUnitController,
                       decoration: const InputDecoration(
-                        labelText: 'Type',
+                        labelText: 'Unit (mg, ml)',
                         border: OutlineInputBorder(),
                       ),
-                      items: MedicineType.values.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.name.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedType = value;
-                          });
-                        }
-                      },
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _frequencyController,
+              DropdownButtonFormField<MedicineType>(
+                value: _selectedType,
                 decoration: const InputDecoration(
-                  labelText: 'Frequency (e.g., Twice a day)',
+                  labelText: 'Medicine Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: MedicineType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.name.toUpperCase()),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedType = value;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _frequencyPerDayController,
+                decoration: const InputDecoration(
+                  labelText: 'Times Per Day',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.repeat),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Required';
+                  if (int.tryParse(value) == null) return 'Must be a number';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: TextFormField(
-                      controller: _stockController,
+                      controller: _stockQuantityController,
                       decoration: const InputDecoration(
                         labelText: 'Current Stock',
                         border: OutlineInputBorder(),
@@ -167,7 +193,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                     child: TextFormField(
                       controller: _lowStockThresholdController,
                       decoration: const InputDecoration(
-                        labelText: 'Low Stock Alert At',
+                        labelText: 'Low Stock Threshold',
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
@@ -196,17 +222,19 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   }
 }
 
-// Private concrete implementation pattern since Medicine is abstract
 class _MedicineImpl extends Medicine {
   const _MedicineImpl({
     required super.id,
-    required super.userId,
+    super.userId,
     required super.name,
-    required super.dosage,
+    super.description,
+    required super.dosageAmount,
+    super.dosageUnit,
     required super.type,
     required super.status,
-    required super.frequency,
-    required super.stock,
+    required super.frequencyPerDay,
+    required super.stockQuantity,
     required super.lowStockThreshold,
+    super.notes,
   });
 }

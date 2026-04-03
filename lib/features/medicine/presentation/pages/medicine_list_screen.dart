@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../bloc/medicine_bloc.dart';
 import '../bloc/medicine_state.dart';
 import '../bloc/medicine_event.dart';
@@ -12,14 +13,17 @@ class MedicineListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // final l10n = AppLocalizations.of(context)!;
+    const titleText = 'Medicines';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Medicines'),
+        title: const Text('Medicines'),
       ),
       body: BlocBuilder<MedicineBloc, MedicineState>(
         builder: (context, state) {
           if (state is MedicineInitial) {
-            return const Center(child: Text('Please wait...'));
+            return const Center(child: CircularProgressIndicator());
           } else if (state is MedicineLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is MedicineLoaded) {
@@ -32,7 +36,9 @@ class MedicineListScreen extends StatelessWidget {
                 final med = state.medicines[index];
                 return ListTile(
                   title: Text(med.name),
-                  subtitle: Text('\${med.dosage} \${med.type.name} - \${med.frequency}'),
+                  subtitle: Text(
+                    '${med.dosageAmount} ${med.dosageUnit ?? med.type.name} - ${med.frequencyPerDay} times/day',
+                  ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () {

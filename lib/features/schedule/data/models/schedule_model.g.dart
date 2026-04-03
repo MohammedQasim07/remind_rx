@@ -22,39 +22,59 @@ const ScheduleModelSchema = CollectionSchema(
       name: r'customRepeatDays',
       type: IsarType.longList,
     ),
-    r'endDate': PropertySchema(
+    r'daysOfWeek': PropertySchema(
       id: 1,
+      name: r'daysOfWeek',
+      type: IsarType.string,
+    ),
+    r'endDate': PropertySchema(
+      id: 2,
       name: r'endDate',
       type: IsarType.dateTime,
     ),
     r'id': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'id',
       type: IsarType.string,
     ),
+    r'isActive': PropertySchema(
+      id: 4,
+      name: r'isActive',
+      type: IsarType.bool,
+    ),
     r'medicineId': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'medicineId',
       type: IsarType.string,
     ),
+    r'notes': PropertySchema(
+      id: 6,
+      name: r'notes',
+      type: IsarType.string,
+    ),
     r'reminderTime': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'reminderTime',
       type: IsarType.dateTime,
     ),
+    r'repeatInterval': PropertySchema(
+      id: 8,
+      name: r'repeatInterval',
+      type: IsarType.long,
+    ),
     r'repeatType': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'repeatType',
       type: IsarType.byte,
       enumMap: _ScheduleModelrepeatTypeEnumValueMap,
     ),
     r'startDate': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'startDate',
       type: IsarType.dateTime,
     ),
     r'userId': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'userId',
       type: IsarType.string,
     )
@@ -125,9 +145,26 @@ int _scheduleModelEstimateSize(
       bytesCount += 3 + value.length * 8;
     }
   }
+  {
+    final value = object.daysOfWeek;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.medicineId.length * 3;
-  bytesCount += 3 + object.userId.length * 3;
+  {
+    final value = object.notes;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.userId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -138,13 +175,17 @@ void _scheduleModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLongList(offsets[0], object.customRepeatDays);
-  writer.writeDateTime(offsets[1], object.endDate);
-  writer.writeString(offsets[2], object.id);
-  writer.writeString(offsets[3], object.medicineId);
-  writer.writeDateTime(offsets[4], object.reminderTime);
-  writer.writeByte(offsets[5], object.repeatType.index);
-  writer.writeDateTime(offsets[6], object.startDate);
-  writer.writeString(offsets[7], object.userId);
+  writer.writeString(offsets[1], object.daysOfWeek);
+  writer.writeDateTime(offsets[2], object.endDate);
+  writer.writeString(offsets[3], object.id);
+  writer.writeBool(offsets[4], object.isActive);
+  writer.writeString(offsets[5], object.medicineId);
+  writer.writeString(offsets[6], object.notes);
+  writer.writeDateTime(offsets[7], object.reminderTime);
+  writer.writeLong(offsets[8], object.repeatInterval);
+  writer.writeByte(offsets[9], object.repeatType.index);
+  writer.writeDateTime(offsets[10], object.startDate);
+  writer.writeString(offsets[11], object.userId);
 }
 
 ScheduleModel _scheduleModelDeserialize(
@@ -155,16 +196,20 @@ ScheduleModel _scheduleModelDeserialize(
 ) {
   final object = ScheduleModel();
   object.customRepeatDays = reader.readLongList(offsets[0]);
-  object.endDate = reader.readDateTimeOrNull(offsets[1]);
-  object.id = reader.readString(offsets[2]);
+  object.daysOfWeek = reader.readStringOrNull(offsets[1]);
+  object.endDate = reader.readDateTimeOrNull(offsets[2]);
+  object.id = reader.readString(offsets[3]);
+  object.isActive = reader.readBool(offsets[4]);
   object.isarId = id;
-  object.medicineId = reader.readString(offsets[3]);
-  object.reminderTime = reader.readDateTime(offsets[4]);
+  object.medicineId = reader.readString(offsets[5]);
+  object.notes = reader.readStringOrNull(offsets[6]);
+  object.reminderTime = reader.readDateTime(offsets[7]);
+  object.repeatInterval = reader.readLongOrNull(offsets[8]);
   object.repeatType =
-      _ScheduleModelrepeatTypeValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+      _ScheduleModelrepeatTypeValueEnumMap[reader.readByteOrNull(offsets[9])] ??
           RepeatType.daily;
-  object.startDate = reader.readDateTime(offsets[6]);
-  object.userId = reader.readString(offsets[7]);
+  object.startDate = reader.readDateTime(offsets[10]);
+  object.userId = reader.readStringOrNull(offsets[11]);
   return object;
 }
 
@@ -178,21 +223,29 @@ P _scheduleModelDeserializeProp<P>(
     case 0:
       return (reader.readLongList(offset)) as P;
     case 1:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readDateTime(offset)) as P;
+    case 8:
+      return (reader.readLongOrNull(offset)) as P;
+    case 9:
       return (_ScheduleModelrepeatTypeValueEnumMap[
               reader.readByteOrNull(offset)] ??
           RepeatType.daily) as P;
-    case 6:
+    case 10:
       return (reader.readDateTime(offset)) as P;
-    case 7:
-      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -450,8 +503,29 @@ extension ScheduleModelQueryWhere
     });
   }
 
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterWhereClause> userIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterWhereClause>
+      userIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'userId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterWhereClause> userIdEqualTo(
-      String userId) {
+      String? userId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
         indexName: r'userId',
@@ -461,7 +535,7 @@ extension ScheduleModelQueryWhere
   }
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterWhereClause>
-      userIdNotEqualTo(String userId) {
+      userIdNotEqualTo(String? userId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -658,6 +732,160 @@ extension ScheduleModelQueryFilter
         upper,
         includeUpper,
       );
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'daysOfWeek',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'daysOfWeek',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'daysOfWeek',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'daysOfWeek',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'daysOfWeek',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'daysOfWeek',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'daysOfWeek',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'daysOfWeek',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'daysOfWeek',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'daysOfWeek',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'daysOfWeek',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      daysOfWeekIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'daysOfWeek',
+        value: '',
+      ));
     });
   }
 
@@ -870,6 +1098,16 @@ extension ScheduleModelQueryFilter
   }
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      isActiveEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isActive',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
       isarIdEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1062,6 +1300,160 @@ extension ScheduleModelQueryFilter
   }
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notes',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
       reminderTimeEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1109,6 +1501,80 @@ extension ScheduleModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'reminderTime',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      repeatIntervalIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'repeatInterval',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      repeatIntervalIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'repeatInterval',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      repeatIntervalEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'repeatInterval',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      repeatIntervalGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'repeatInterval',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      repeatIntervalLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'repeatInterval',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      repeatIntervalBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'repeatInterval',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1230,8 +1696,26 @@ extension ScheduleModelQueryFilter
   }
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      userIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
+      userIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
       userIdEqualTo(
-    String value, {
+    String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1245,7 +1729,7 @@ extension ScheduleModelQueryFilter
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
       userIdGreaterThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1261,7 +1745,7 @@ extension ScheduleModelQueryFilter
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
       userIdLessThan(
-    String value, {
+    String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1277,8 +1761,8 @@ extension ScheduleModelQueryFilter
 
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterFilterCondition>
       userIdBetween(
-    String lower,
-    String upper, {
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1374,6 +1858,19 @@ extension ScheduleModelQueryLinks
 
 extension ScheduleModelQuerySortBy
     on QueryBuilder<ScheduleModel, ScheduleModel, QSortBy> {
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> sortByDaysOfWeek() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'daysOfWeek', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      sortByDaysOfWeekDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'daysOfWeek', Sort.desc);
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> sortByEndDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'endDate', Sort.asc);
@@ -1398,6 +1895,19 @@ extension ScheduleModelQuerySortBy
     });
   }
 
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> sortByIsActive() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isActive', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      sortByIsActiveDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isActive', Sort.desc);
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> sortByMedicineId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'medicineId', Sort.asc);
@@ -1408,6 +1918,18 @@ extension ScheduleModelQuerySortBy
       sortByMedicineIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'medicineId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> sortByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> sortByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
     });
   }
 
@@ -1422,6 +1944,20 @@ extension ScheduleModelQuerySortBy
       sortByReminderTimeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reminderTime', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      sortByRepeatInterval() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'repeatInterval', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      sortByRepeatIntervalDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'repeatInterval', Sort.desc);
     });
   }
 
@@ -1466,6 +2002,19 @@ extension ScheduleModelQuerySortBy
 
 extension ScheduleModelQuerySortThenBy
     on QueryBuilder<ScheduleModel, ScheduleModel, QSortThenBy> {
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> thenByDaysOfWeek() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'daysOfWeek', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      thenByDaysOfWeekDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'daysOfWeek', Sort.desc);
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> thenByEndDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'endDate', Sort.asc);
@@ -1487,6 +2036,19 @@ extension ScheduleModelQuerySortThenBy
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> thenByIsActive() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isActive', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      thenByIsActiveDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isActive', Sort.desc);
     });
   }
 
@@ -1515,6 +2077,18 @@ extension ScheduleModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> thenByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy> thenByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
       thenByReminderTime() {
     return QueryBuilder.apply(this, (query) {
@@ -1526,6 +2100,20 @@ extension ScheduleModelQuerySortThenBy
       thenByReminderTimeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reminderTime', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      thenByRepeatInterval() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'repeatInterval', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QAfterSortBy>
+      thenByRepeatIntervalDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'repeatInterval', Sort.desc);
     });
   }
 
@@ -1577,6 +2165,13 @@ extension ScheduleModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ScheduleModel, ScheduleModel, QDistinct> distinctByDaysOfWeek(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'daysOfWeek', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QDistinct> distinctByEndDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'endDate');
@@ -1590,6 +2185,12 @@ extension ScheduleModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ScheduleModel, ScheduleModel, QDistinct> distinctByIsActive() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isActive');
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QDistinct> distinctByMedicineId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1597,10 +2198,24 @@ extension ScheduleModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ScheduleModel, ScheduleModel, QDistinct> distinctByNotes(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<ScheduleModel, ScheduleModel, QDistinct>
       distinctByReminderTime() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'reminderTime');
+    });
+  }
+
+  QueryBuilder<ScheduleModel, ScheduleModel, QDistinct>
+      distinctByRepeatInterval() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'repeatInterval');
     });
   }
 
@@ -1639,6 +2254,12 @@ extension ScheduleModelQueryProperty
     });
   }
 
+  QueryBuilder<ScheduleModel, String?, QQueryOperations> daysOfWeekProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'daysOfWeek');
+    });
+  }
+
   QueryBuilder<ScheduleModel, DateTime?, QQueryOperations> endDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'endDate');
@@ -1651,9 +2272,21 @@ extension ScheduleModelQueryProperty
     });
   }
 
+  QueryBuilder<ScheduleModel, bool, QQueryOperations> isActiveProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isActive');
+    });
+  }
+
   QueryBuilder<ScheduleModel, String, QQueryOperations> medicineIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'medicineId');
+    });
+  }
+
+  QueryBuilder<ScheduleModel, String?, QQueryOperations> notesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notes');
     });
   }
 
@@ -1661,6 +2294,12 @@ extension ScheduleModelQueryProperty
       reminderTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'reminderTime');
+    });
+  }
+
+  QueryBuilder<ScheduleModel, int?, QQueryOperations> repeatIntervalProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'repeatInterval');
     });
   }
 
@@ -1677,9 +2316,58 @@ extension ScheduleModelQueryProperty
     });
   }
 
-  QueryBuilder<ScheduleModel, String, QQueryOperations> userIdProperty() {
+  QueryBuilder<ScheduleModel, String?, QQueryOperations> userIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'userId');
     });
   }
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+ScheduleModel _$ScheduleModelFromJson(Map<String, dynamic> json) =>
+    ScheduleModel()
+      ..isarId = (json['isarId'] as num).toInt()
+      ..id = json['id'] as String
+      ..medicineId = json['medicineId'] as String
+      ..userId = json['userId'] as String?
+      ..startDate = DateTime.parse(json['startDate'] as String)
+      ..endDate = json['endDate'] == null
+          ? null
+          : DateTime.parse(json['endDate'] as String)
+      ..reminderTime = DateTime.parse(json['reminderTime'] as String)
+      ..repeatType = $enumDecode(_$RepeatTypeEnumMap, json['repeatType'])
+      ..repeatInterval = (json['repeatInterval'] as num?)?.toInt()
+      ..daysOfWeek = json['daysOfWeek'] as String?
+      ..customRepeatDays = (json['customRepeatDays'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList()
+      ..isActive = json['isActive'] as bool
+      ..notes = json['notes'] as String?;
+
+Map<String, dynamic> _$ScheduleModelToJson(ScheduleModel instance) =>
+    <String, dynamic>{
+      'isarId': instance.isarId,
+      'id': instance.id,
+      'medicineId': instance.medicineId,
+      'userId': instance.userId,
+      'startDate': instance.startDate.toIso8601String(),
+      'endDate': instance.endDate?.toIso8601String(),
+      'reminderTime': instance.reminderTime.toIso8601String(),
+      'repeatType': _$RepeatTypeEnumMap[instance.repeatType]!,
+      'repeatInterval': instance.repeatInterval,
+      'daysOfWeek': instance.daysOfWeek,
+      'customRepeatDays': instance.customRepeatDays,
+      'isActive': instance.isActive,
+      'notes': instance.notes,
+    };
+
+const _$RepeatTypeEnumMap = {
+  RepeatType.daily: 0,
+  RepeatType.weekly: 1,
+  RepeatType.monthly: 2,
+  RepeatType.custom: 3,
+  RepeatType.none: 4,
+};

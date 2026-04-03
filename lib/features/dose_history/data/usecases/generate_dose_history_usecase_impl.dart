@@ -1,5 +1,5 @@
 import '../../domain/entities/dose_history.dart';
-import '../../domain/entities/schedule.dart';
+import '../../../schedule/domain/entities/schedule.dart';
 import '../../domain/usecases/generate_dose_history_usecase.dart';
 import 'package:uuid/uuid.dart';
 
