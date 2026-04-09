@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
@@ -39,11 +38,36 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  InputDecoration _buildInputDecoration({required String label, required IconData icon, Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: AppTheme.textGrey),
+      prefixIcon: Icon(icon, color: AppTheme.primaryGreen),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is Authenticated) {
@@ -59,211 +83,148 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             }
           },
-          child: Stack(
+          child: Column(
             children: [
-              // Background Gradient
+              // Custom App Bar Header Area
               Container(
+                width: double.infinity,
+                padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 40, 20, 60),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [AppTheme.primaryGreen, Color(0xFF008960)],
                   ),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(48)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.15),
+                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      child: const Icon(
+                        Icons.medication_liquid_rounded,
+                        size: 70,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'RemindRx',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const Text(
+                      'Your Smart Health Companion',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              // Floating Decorative Circles
-              Positioned(
-                top: -50,
-                right: -50,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -100,
-                left: -50,
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.03),
-                  ),
-                ),
-              ),
-              SafeArea(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
+
+              // Form Area
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Form(
+                    key: _formKey,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // App Logo / Icon
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.1),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                          ),
-                          child: const Icon(
-                            Icons.medication_liquid_rounded,
-                            size: 80,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'RemindRx',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const Text(
-                          'Your Smart Health Companion',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 50),
+                        const Text('Welcome Back!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                        const SizedBox(height: 8),
+                        const Text('Please login to manage your medical routines.', style: TextStyle(color: AppTheme.textGrey)),
+                        const SizedBox(height: 32),
                         
-                        // Login Card (Glassmorphism)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(25),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              padding: const EdgeInsets.all(25),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: Form(
-                                key: _formKey,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    const Text(
-                                      'Welcome Back',
-                                      style: TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryGreen,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 25),
-                                    TextFormField(
-                                      controller: _emailController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Email Address',
-                                        prefixIcon: const Icon(Icons.email_outlined),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                                        filled: true,
-                                        fillColor: Colors.grey.shade50,
-                                      ),
-                                      keyboardType: TextInputType.emailAddress,
-                                      validator: (value) {
-                                        if (value == null || value.trim().isEmpty) {
-                                          return 'Please enter your email';
-                                        }
-                                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
-                                          return 'Enter a valid email address';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    const SizedBox(height: 15),
-                                    TextFormField(
-                                      controller: _passwordController,
-                                      obscureText: !_isPasswordVisible,
-                                      decoration: InputDecoration(
-                                        labelText: 'Password',
-                                        prefixIcon: const Icon(Icons.lock_outline),
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                                            color: Colors.grey,
-                                          ),
-                                          onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                                        ),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                                        filled: true,
-                                        fillColor: Colors.grey.shade50,
-                                      ),
-                                      validator: (value) => 
-                                          value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
-                                    ),
-                                    const SizedBox(height: 25),
-                                    BlocBuilder<AuthBloc, AuthState>(
-                                      builder: (context, state) {
-                                        return ElevatedButton(
-                                          onPressed: state is AuthLoading ? null : _onLogin,
-                                          style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(15),
-                                            ),
-                                            backgroundColor: AppTheme.primaryGreen,
-                                            foregroundColor: Colors.white,
-                                            elevation: 2,
-                                          ),
-                                          child: state is AuthLoading
-                                              ? const SizedBox(
-                                                  height: 24,
-                                                  width: 24,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2.5,
-                                                    color: Colors.white,
-                                                  ),
-                                                )
-                                              : const Text(
-                                                  'LOG IN',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    letterSpacing: 1.2,
-                                                  ),
-                                                ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: _buildInputDecoration(label: 'Email Address', icon: Icons.email_outlined),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) return 'Please enter your email';
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) return 'Enter a valid email address';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: !_isPasswordVisible,
+                          decoration: _buildInputDecoration(
+                            label: 'Password',
+                            icon: Icons.lock_outline,
+                            suffixIcon: IconButton(
+                              icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
+                              onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                             ),
                           ),
+                          validator: (value) => value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
                         ),
-                        const SizedBox(height: 30),
-                        TextButton(
-                          onPressed: () {
-                             Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RegisterScreen()));
-                          },
-                          child: const Text(
-                            "Don't have an account? Sign Up",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {}, // Future: Forgot Password
+                            child: const Text('Forgot Password?', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
                           ),
                         ),
+                        
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Don't have an account?", style: TextStyle(color: AppTheme.textGrey)),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RegisterScreen()));
+                              },
+                              child: const Text('Sign Up', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   ),
+                ),
+              ),
+
+              // Bottom Navigation Area
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))]
+                ),
+                child: BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    return ElevatedButton(
+                      onPressed: state is AuthLoading ? null : _onLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        minimumSize: const Size(double.infinity, 56),
+                      ),
+                      child: state is AuthLoading
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                          : const Text('Log In', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    );
+                  },
                 ),
               ),
             ],

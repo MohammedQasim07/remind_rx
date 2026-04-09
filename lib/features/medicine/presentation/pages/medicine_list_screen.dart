@@ -19,52 +19,55 @@ class MedicineListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('My Cabinet', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: BlocBuilder<MedicineBloc, MedicineState>(
-        builder: (context, state) {
-          if (state is MedicineInitial || state is MedicineLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
-          } else if (state is MedicineLoaded) {
-            if (state.medicines.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGreen.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.medication_outlined, size: 80, color: AppTheme.primaryGreen.withOpacity(0.5)),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text('Your cabinet is empty', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-                    const SizedBox(height: 8),
-                    const Text('Tap the + button to add medications', style: TextStyle(color: AppTheme.textGrey, fontSize: 16)),
-                  ],
-                ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 130),
-              itemCount: state.medicines.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final med = state.medicines[index];
-                return _buildPremiumMedicineCard(context, med);
-              },
-            );
-          } else if (state is MedicineError) {
-            return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
-          }
-          return const SizedBox.shrink();
-        },
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildCabinetHeader(context),
+            Expanded(
+              child: BlocBuilder<MedicineBloc, MedicineState>(
+                builder: (context, state) {
+                  if (state is MedicineInitial || state is MedicineLoading) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+                  } else if (state is MedicineLoaded) {
+                    if (state.medicines.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.medication_outlined, size: 80, color: AppTheme.primaryGreen.withOpacity(0.5)),
+                            ),
+                            const SizedBox(height: 24),
+                            const Text('Your cabinet is empty', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                            const SizedBox(height: 8),
+                            const Text('Tap the + button to add medications', style: TextStyle(color: AppTheme.textGrey, fontSize: 16)),
+                          ],
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 130),
+                      itemCount: state.medicines.length,
+                      separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final med = state.medicines[index];
+                        return _buildPremiumMedicineCard(context, med);
+                      },
+                    );
+                  } else if (state is MedicineError) {
+                    return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 100.0),
@@ -82,6 +85,46 @@ class MedicineListScreen extends StatelessWidget {
           icon: const Icon(Icons.add_rounded, size: 24),
           label: const Text('Add Medicine', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCabinetHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Your Smart Inventory', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
+          Text('Medicine Cabinet', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+          const SizedBox(height: 20),
+          GlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.search_rounded, color: AppTheme.textGrey),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Search medicines...',
+                      hintStyle: TextStyle(color: AppTheme.textGrey),
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) {
+                      // Future: dispatch search event
+                    },
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: AppTheme.primaryGreen.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.primaryGreen),
+                )
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
@@ -220,6 +263,15 @@ class MedicineListScreen extends StatelessWidget {
                 Row(
                   children: [
                     InkWell(
+                      onTap: () => _showRefillDialog(context, med),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        child: const Icon(Icons.add_box_rounded, color: Colors.blueAccent, size: 24),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    InkWell(
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => AddScheduleScreen(medicine: med, currentUserId: currentUserId)),
@@ -246,6 +298,83 @@ class MedicineListScreen extends StatelessWidget {
             ),
           )
         ],
+      ),
+    );
+  }
+
+  void _showRefillDialog(BuildContext context, Medicine med) {
+    int amountToAdd = 10;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setState) {
+            return Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
+                  const SizedBox(height: 24),
+                  const Text('Refill Stock', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+                  const SizedBox(height: 8),
+                  Text('How many units of ${med.name} did you buy?', style: const TextStyle(color: AppTheme.textGrey), textAlign: TextAlign.center),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildRefillCircleBtn(Icons.remove, () => setState(() => amountToAdd = (amountToAdd - 5).clamp(1, 999))),
+                      const SizedBox(width: 32),
+                      Text('+ $amountToAdd', style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                      const SizedBox(width: 32),
+                      _buildRefillCircleBtn(Icons.add, () => setState(() => amountToAdd += 5)),
+                    ],
+                  ),
+                  const SizedBox(height: 48),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen, 
+                        padding: const EdgeInsets.symmetric(vertical: 20), 
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        elevation: 8,
+                        shadowColor: AppTheme.primaryGreen.withOpacity(0.4),
+                      ),
+                      onPressed: () {
+                        final updatedMedicine = med.copyWith(stockQuantity: med.stockQuantity + amountToAdd);
+                        context.read<MedicineBloc>().add(UpdateMedicine(updatedMedicine));
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added \$amountToAdd to ${med.name} stock!')));
+                      },
+                      child: const Text('Confirm Refill', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRefillCircleBtn(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+        child: Icon(icon, color: AppTheme.textDark, size: 28),
       ),
     );
   }

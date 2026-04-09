@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/widgets/avatar_selector.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -22,6 +24,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   late TextEditingController _phoneController;
 
   late User _currentUser;
+  String? _avatarPath;
 
   @override
   void initState() {
@@ -38,6 +41,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       _nameController.text = _currentUser.name;
       _emailController.text = _currentUser.email.isNotEmpty ? _currentUser.email : 'No email provided';
       _phoneController.text = _currentUser.phone;
+      _avatarPath = _currentUser.avatarPath;
     }
   }
 
@@ -60,6 +64,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         phoneCountryCode: _currentUser.phoneCountryCode,
         role: _currentUser.role,
         gender: _currentUser.gender,
+        avatarPath: _avatarPath,
       );
 
       // Dispatch event to update User Profile
@@ -137,6 +142,12 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const SizedBox(height: 12),
+                  AvatarSelector(
+                    currentAvatarPath: _avatarPath,
+                    onAvatarSelected: (path) => setState(() => _avatarPath = path),
+                  ),
+                  const SizedBox(height: 32),
                   _buildSectionTitle('Personal Information'),
                   const SizedBox(height: 12),
                   GlassCard(
@@ -217,6 +228,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       ),
     );
   }
+
+
 
   Widget _buildSectionTitle(String title) {
     return Padding(

@@ -29,6 +29,14 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+
+    // Request permissions for Android 13+
+    await _notificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+        
+    // Request exact alarms for Android 12+
+    await _notificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()?.requestExactAlarmsPermission();
   }
 
   void _onNotificationTapped(NotificationResponse response) {

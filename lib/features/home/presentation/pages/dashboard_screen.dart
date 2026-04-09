@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../features/user/presentation/pages/account_settings_screen.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../bloc/dashboard_summary_bloc.dart';
@@ -9,6 +11,10 @@ import '../../../../features/dose_history/domain/entities/dose_history.dart';
 import '../../../../features/user/presentation/bloc/auth_bloc.dart';
 import '../../../../features/user/presentation/bloc/auth_state.dart';
 import '../../../../features/medicine/presentation/pages/add_medicine_screen.dart';
+import '../../../../features/dose_history/presentation/bloc/dose_history_bloc.dart';
+import '../../../../features/dose_history/presentation/bloc/dose_history_event.dart';
+import '../../../../features/medicine/presentation/bloc/medicine_bloc.dart';
+import '../../../../features/medicine/presentation/bloc/medicine_event.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String currentUserId;
@@ -35,65 +41,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ));
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning,';
-    if (hour < 17) return 'Good Afternoon,';
-    return 'Good Evening,';
-  }
 
-  String _getUserName() {
-    final state = context.read<AuthBloc>().state;
-    if (state is Authenticated) {
-      if (state.user.name.isNotEmpty) {
-        return state.user.name.split(' ').first; // Return first name
-      }
-    }
-    return 'Patient';
-  }
 
-  void _showDoseConfirmationDialog(DashboardDoseItem item) {
-    if (item.history.status == DoseStatus.taken) return;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: Text('Mark Dose', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-        content: Text('What would you like to do with ${item.medicine.name}?', style: const TextStyle(color: AppTheme.textGrey)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _updateDoseStatus(item, DoseStatus.skipped);
-            },
-            child: const Text('Skip', style: TextStyle(color: AppTheme.textGrey, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _updateDoseStatus(item, DoseStatus.taken);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Take Now', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _updateDoseStatus(DashboardDoseItem item, DoseStatus newStatus) {
-    context.read<DashboardSummaryBloc>().add(MarkDoseStatus(
-          historyId: item.history.id,
-          status: newStatus,
-          actualTime: DateTime.now(),
-        ));
-    _loadData();
-  }
 
   DashboardDoseItem? _getUpcomingDose(List<DashboardDoseItem> items) {
     // Determine the next dose only if viewing "today"
@@ -138,37 +87,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 1. Dynamic Greeting Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, authState) {
+                      String? avatarPath;
+                      if (authState is Authenticated) {
+                        avatarPath = authState.user.avatarPath;
+                      }
+                      
+                      Widget avatarChild = const Icon(Icons.person, color: AppTheme.primaryGreen, size: 28);
+                      if (avatarPath != null) {
+                        if (avatarPath!.startsWith('http')) {
+                          avatarChild = ClipOval(child: Image.network(avatarPath, fit: BoxFit.cover, width: 56, height: 56));
+                        } else {
+                          avatarChild = ClipOval(child: Image.file(File(avatarPath), fit: BoxFit.cover, width: 56, height: 56));
+                        }
+                      }
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(_getGreeting(), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
-                          Text(
-                            _getUserName(),
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.textDark,
-                                  letterSpacing: -0.5,
-                                ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Your Medical Routine', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
+                              Text(
+                                'Health Dashboard',
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textDark,
+                                      letterSpacing: -0.5,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (ctx) {
+                                  return Container(
+                                    height: MediaQuery.of(context).size.height * 0.85,
+                                    clipBehavior: Clip.hardEdge,
+                                    decoration: const BoxDecoration(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                                    ),
+                                    child: const AccountSettingsScreen(),
+                                  );
+                                },
+                              );
+                            },
+                            child: Container(
+                              width: 56, height: 56,
+                              padding: EdgeInsets.zero,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white.withOpacity(0.9), width: 3),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)],
+                              ),
+                              child: avatarChild,
+                            ),
                           ),
                         ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
-                        ),
-                        child: const CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.white,
-                          child: Icon(Icons.person, color: AppTheme.primaryGreen, size: 28),
-                        ),
-                      ),
-                    ],
+                      );
+                    }
                   ),
                   const SizedBox(height: 24),
 
@@ -565,5 +549,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     ));
+  }
+
+  void _showDoseConfirmationDialog(DashboardDoseItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white, 
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10))),
+              const SizedBox(height: 24),
+              Icon(Icons.vaccines_rounded, color: AppTheme.primaryGreen.withOpacity(0.5), size: 48),
+              const SizedBox(height: 16),
+              Text('Take ${item.medicine.name}?', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+              const SizedBox(height: 8),
+              Text('Dose: ${item.medicine.dosageAmount} ${item.medicine.dosageUnit ?? ""}', style: const TextStyle(fontSize: 16, color: AppTheme.textGrey)),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18), 
+                        side: BorderSide(color: Colors.orange.withOpacity(0.5), width: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      icon: const Icon(Icons.block_rounded, color: Colors.orange),
+                      label: const Text('Skip', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        context.read<DoseHistoryBloc>().add(UpdateDoseStatus(
+                          historyId: item.history.id, 
+                          status: DoseStatus.skipped, 
+                          actualTime: DateTime.now()
+                        ));
+                        Navigator.pop(ctx);
+                        _loadData();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Dose skipped.')));
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen, 
+                        padding: const EdgeInsets.symmetric(vertical: 18), 
+                        elevation: 8,
+                        shadowColor: AppTheme.primaryGreen.withOpacity(0.4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                      label: const Text('Take Dose', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        // 1. Mark as taken
+                        context.read<DoseHistoryBloc>().add(UpdateDoseStatus(
+                          historyId: item.history.id, 
+                          status: DoseStatus.taken, 
+                          actualTime: DateTime.now()
+                        ));
+                        
+                        // 2. Deduct Inventory!
+                        final med = item.medicine;
+                        final newStock = (med.stockQuantity - med.dosageAmount).toInt();
+                        if (newStock >= 0) {
+                           context.read<MedicineBloc>().add(UpdateMedicine(med.copyWith(stockQuantity: newStock)));
+                        } else {
+                           context.read<MedicineBloc>().add(UpdateMedicine(med.copyWith(stockQuantity: 0)));
+                        }
+                        
+                        Navigator.pop(ctx);
+                        _loadData();
+                        
+                        // Show beautiful success
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: const Text('Dose logged successfully! 🎉'),
+                          backgroundColor: AppTheme.primaryGreen,
+                        ));
+                      },
+                    ),
+                  ),
+                ]
+              )
+            ]
+          )
+        );
+      }
+    );
   }
 }

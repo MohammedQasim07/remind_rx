@@ -46,4 +46,34 @@ class Medicine {
     required this.lowStockThreshold,
     this.notes,
   });
+
+  Medicine copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? description,
+    double? dosageAmount,
+    String? dosageUnit,
+    MedicineType? type,
+    MedicineStatus? status,
+    int? frequencyPerDay,
+    int? stockQuantity,
+    int? lowStockThreshold,
+    String? notes,
+  }) {
+    return Medicine(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      dosageAmount: dosageAmount ?? this.dosageAmount,
+      dosageUnit: dosageUnit ?? this.dosageUnit,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      frequencyPerDay: frequencyPerDay ?? this.frequencyPerDay,
+      stockQuantity: stockQuantity ?? this.stockQuantity,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
+      notes: notes ?? this.notes,
+    );
+  }
 }

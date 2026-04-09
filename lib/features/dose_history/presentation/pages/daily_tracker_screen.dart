@@ -31,13 +31,8 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Health Analytics', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: BlocBuilder<DoseHistoryBloc, DoseHistoryState>(
+      body: SafeArea(
+        child: BlocBuilder<DoseHistoryBloc, DoseHistoryState>(
         builder: (context, state) {
           if (state is DoseHistoryLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -48,7 +43,7 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
           }
           return const SizedBox.shrink();
         },
-      ),
+      )),
     );
   }
 
@@ -104,6 +99,42 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // DATA HEADER INJECTION
+          const SizedBox(height: 10),
+          Center(
+            child: Column(
+              children: [
+                Text('Performance & Reports', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
+                Text('Health Compliance', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+                const SizedBox(height: 32),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 140,
+                      height: 140,
+                      child: CircularProgressIndicator(
+                        value: adherence,
+                        strokeWidth: 12,
+                        backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                        color: _getAdherenceColor(adherence),
+                        strokeCap: StrokeCap.round,
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${(adherence * 100).toInt()}%', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: _getAdherenceColor(adherence))),
+                        Text('Compliance', style: TextStyle(fontSize: 12, color: AppTheme.textGrey)),
+                      ],
+                    )
+                  ],
+                ),
+              ]
+            ),
+          ),
+          const SizedBox(height: 48),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -134,6 +165,12 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
         ],
       ),
     );
+  }
+
+  Color _getAdherenceColor(double rate) {
+    if (rate >= 0.8) return AppTheme.primaryGreen;
+    if (rate >= 0.5) return Colors.orange;
+    return Colors.redAccent;
   }
 
   Widget _buildStatsRow(int total, int taken, int missed) {

@@ -35,6 +35,7 @@ class RegisterRequest {
   final String? city;
   final String? country;
   final String? occupation;
+  final String? avatarPath;
 
   RegisterRequest({
     required this.email,
@@ -49,6 +50,7 @@ class RegisterRequest {
     this.city,
     this.country,
     this.occupation,
+    this.avatarPath,
   });
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) => _$RegisterRequestFromJson(json);

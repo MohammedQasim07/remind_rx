@@ -25,6 +25,7 @@ class User {
   final String? city;
   final String? country;
   final String? occupation;
+  final String? avatarPath;
 
   const User({
     required this.id,
@@ -39,5 +40,38 @@ class User {
     this.city,
     this.country,
     this.occupation,
+    this.avatarPath,
   });
+
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? phone,
+    String? phoneCountryCode,
+    Role? role,
+    Gender? gender,
+    DateTime? dateOfBirth,
+    String? nationality,
+    String? city,
+    String? country,
+    String? occupation,
+    String? avatarPath,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      phoneCountryCode: phoneCountryCode ?? this.phoneCountryCode,
+      role: role ?? this.role,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      nationality: nationality ?? this.nationality,
+      city: city ?? this.city,
+      country: country ?? this.country,
+      occupation: occupation ?? this.occupation,
+      avatarPath: avatarPath ?? this.avatarPath,
+    );
+  }
 }
