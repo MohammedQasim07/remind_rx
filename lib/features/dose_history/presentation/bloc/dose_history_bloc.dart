@@ -8,6 +8,7 @@ class DoseHistoryBloc extends Bloc<DoseHistoryEvent, DoseHistoryState> {
 
   DoseHistoryBloc({required this.doseHistoryRepository}) : super(DoseHistoryInitial()) {
     on<LoadDailyDoseHistory>(_onLoadDailyDoseHistory);
+    on<LoadWeeklyDoseHistory>(_onLoadWeeklyDoseHistory);
     on<UpdateDoseStatus>(_onUpdateDoseStatus);
   }
 
@@ -21,6 +22,23 @@ class DoseHistoryBloc extends Bloc<DoseHistoryEvent, DoseHistoryState> {
       final endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
       
       final history = await doseHistoryRepository.getDoseHistoryForUser(event.userId, startOfDay, endOfDay);
+      emit(DoseHistoryLoaded(history));
+    } catch (e) {
+      emit(DoseHistoryError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadWeeklyDoseHistory(
+    LoadWeeklyDoseHistory event,
+    Emitter<DoseHistoryState> emit,
+  ) async {
+    emit(DoseHistoryLoading());
+    try {
+      final now = DateTime.now();
+      final endOfDay = DateTime(now.year, now.month, now.day).add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
+      final startOfWeek = endOfDay.subtract(const Duration(days: 7));
+      
+      final history = await doseHistoryRepository.getDoseHistoryForUser(event.userId, startOfWeek, endOfDay);
       emit(DoseHistoryLoaded(history));
     } catch (e) {
       emit(DoseHistoryError(e.toString()));

@@ -22,10 +22,10 @@ abstract class MedicineRemoteDataSource {
   Future<MedicineModel> getMedicineById(@Path("id") String id);
 
   @POST("/api/medicines")
-  Future<void> createMedicine(@Body() MedicineModel medicine);
+  Future<void> createMedicine(@Body() Map<String, dynamic> body);
 
   @PUT("/api/medicines/{id}")
-  Future<void> updateMedicine(@Path("id") String id, @Body() MedicineModel medicine);
+  Future<void> updateMedicine(@Path("id") String id, @Body() Map<String, dynamic> body);
 
   @DELETE("/api/medicines/{id}")
   Future<void> deleteMedicine(@Path("id") String id);

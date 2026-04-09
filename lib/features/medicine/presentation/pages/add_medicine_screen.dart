@@ -1,36 +1,107 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
+
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_card.dart';
 import '../../domain/entities/medicine.dart';
 import '../bloc/medicine_bloc.dart';
 import '../bloc/medicine_event.dart';
 import '../bloc/medicine_state.dart';
+import '../../../schedule/domain/entities/schedule.dart';
 
-// ─── Medicine Type Visual Config ──────────────────────────────────
+// ─── Type Interface ─────────────────────────────────────────────
 class _MedicineTypeOption {
   final MedicineType type;
-  final String emoji;
+  final IconData icon;
+  final Color color;
   final String label;
-  final String hint;
-  const _MedicineTypeOption({required this.type, required this.emoji, required this.label, required this.hint});
+
+  const _MedicineTypeOption({
+    required this.type,
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
 }
 
 const _typeOptions = [
-  _MedicineTypeOption(type: MedicineType.pill,     emoji: '💊', label: 'Pill',     hint: 'Tablet or pill'),
-  _MedicineTypeOption(type: MedicineType.capsule,  emoji: '💉', label: 'Capsule',  hint: 'Capsule form'),
-  _MedicineTypeOption(type: MedicineType.liquid,   emoji: '🧴', label: 'Syrup',    hint: 'Liquid / Syrup'),
-  _MedicineTypeOption(type: MedicineType.injection,emoji: '💉', label: 'Injection',hint: 'Injectable'),
-  _MedicineTypeOption(type: MedicineType.inhaler,  emoji: '🫁', label: 'Inhaler',  hint: 'Breathing aid'),
-  _MedicineTypeOption(type: MedicineType.drops,    emoji: '💧', label: 'Drops',    hint: 'Eye / Ear drops'),
-  _MedicineTypeOption(type: MedicineType.cream,    emoji: '🧼', label: 'Cream',    hint: 'Topical cream'),
-  _MedicineTypeOption(type: MedicineType.other,    emoji: '📦', label: 'Other',    hint: 'Something else'),
+  _MedicineTypeOption(type: MedicineType.pill, icon: Icons.medication_rounded, color: Colors.blueAccent, label: 'Pill'),
+  _MedicineTypeOption(type: MedicineType.capsule, icon: Icons.medication_liquid_rounded, color: Colors.indigo, label: 'Capsule'),
+  _MedicineTypeOption(type: MedicineType.liquid, icon: Icons.water_drop_rounded, color: Colors.teal, label: 'Liquid / Syrup'),
+  _MedicineTypeOption(type: MedicineType.injection, icon: Icons.vaccines_rounded, color: Colors.purpleAccent, label: 'Injection'),
+  _MedicineTypeOption(type: MedicineType.inhaler, icon: Icons.air_rounded, color: Colors.orangeAccent, label: 'Inhaler'),
+  _MedicineTypeOption(type: MedicineType.drops, icon: Icons.opacity_rounded, color: Colors.lightBlue, label: 'Drops'),
+  _MedicineTypeOption(type: MedicineType.cream, icon: Icons.healing_rounded, color: Colors.pinkAccent, label: 'Cream'),
+  _MedicineTypeOption(type: MedicineType.other, icon: Icons.medical_services_rounded, color: AppTheme.primaryGreen, label: 'Other'),
 ];
 
-// ─── Common dosage units per type ─────────────────────────────────
-const _unitSuggestions = ['mg', 'ml', 'mcg', 'g', 'IU', '%', 'drops'];
+// ─── Dynamic Vocabulary Logic ───────────────────────────────────
+class _MedicineVocabulary {
+  final String amountLabel;
+  final String stockLabel;
+  final String frequencyLabel;
+  final List<String> unitSuggestions;
 
-// ─── Main Screen ──────────────────────────────────────────────────
+  const _MedicineVocabulary({
+    required this.amountLabel,
+    required this.stockLabel,
+    required this.frequencyLabel,
+    required this.unitSuggestions,
+  });
+}
+
+_MedicineVocabulary _getVocabularyForType(MedicineType type) {
+  switch (type) {
+    case MedicineType.cream:
+      return const _MedicineVocabulary(
+        amountLabel: 'Amount (e.g. 1 fingertip)',
+        stockLabel: 'Gram/tube capacity left',
+        frequencyLabel: 'How many times to apply?',
+        unitSuggestions: ['application(s)', 'g', 'mg', '%'],
+      );
+    case MedicineType.drops:
+      return const _MedicineVocabulary(
+        amountLabel: 'How many drops?',
+        stockLabel: 'Drops left in bottle (est)',
+        frequencyLabel: 'How many times a day?',
+        unitSuggestions: ['drop(s)', 'ml'],
+      );
+    case MedicineType.injection:
+      return const _MedicineVocabulary(
+        amountLabel: 'Injection Volume',
+        stockLabel: 'Remaining injections/vials',
+        frequencyLabel: 'How many injections a day?',
+        unitSuggestions: ['ml', 'IU', 'mg'],
+      );
+    case MedicineType.liquid:
+      return const _MedicineVocabulary(
+        amountLabel: 'Dose volume (e.g. 10)',
+        stockLabel: 'Total liquid left (ml)',
+        frequencyLabel: 'How many times a day?',
+        unitSuggestions: ['ml', 'spoon(s)'],
+      );
+    case MedicineType.inhaler:
+      return const _MedicineVocabulary(
+        amountLabel: 'How many puffs?',
+        stockLabel: 'Puffs remaining in inhaler',
+        frequencyLabel: 'How many times a day?',
+        unitSuggestions: ['puff(s)', 'mcg'],
+      );
+    case MedicineType.pill:
+    case MedicineType.capsule:
+    default:
+      return const _MedicineVocabulary(
+        amountLabel: 'Dose (e.g. 1 pill or 500mg)',
+        stockLabel: 'Pills/Capsules left in box',
+        frequencyLabel: 'How many times a day?',
+        unitSuggestions: ['pill(s)', 'mg', 'g'],
+      );
+  }
+}
+
+// ─── Main Screen ────────────────────────────────────────────────
 class AddMedicineScreen extends StatefulWidget {
   final String currentUserId;
   const AddMedicineScreen({Key? key, required this.currentUserId}) : super(key: key);
@@ -40,33 +111,38 @@ class AddMedicineScreen extends StatefulWidget {
 }
 
 class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTickerProviderStateMixin {
-  int _step = 0; // 0 = type, 1 = details, 2 = schedule & stock
+  int _step = 0; // 0 = Type, 1 = Details, 2 = Schedule & Stock
   late AnimationController _anim;
   late Animation<double> _fadeAnim;
 
-  // Form data
   MedicineType _selectedType = MedicineType.pill;
-  final _nameCtrl      = TextEditingController();
-  final _amountCtrl    = TextEditingController();
-  final _unitCtrl      = TextEditingController(text: 'mg');
-  final _notesCtrl     = TextEditingController();
-  final _stockCtrl     = TextEditingController();
-  final _lowAlertCtrl  = TextEditingController();
-  int _timesPerDay = 1; // frequency slider
+  final _nameCtrl = TextEditingController();
+  final _amountCtrl = TextEditingController();
+  final _unitCtrl = TextEditingController(text: 'pill(s)');
+  final _notesCtrl = TextEditingController();
+  final _stockCtrl = TextEditingController();
+  final _lowAlertCtrl = TextEditingController();
+
+  int _timesPerDay = 1;
+  List<TimeOfDay> _reminderTimes = [const TimeOfDay(hour: 8, minute: 0)];
 
   @override
   void initState() {
     super.initState();
     _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
-    _fadeAnim = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic);
     _anim.forward();
   }
 
   @override
   void dispose() {
     _anim.dispose();
-    _nameCtrl.dispose(); _amountCtrl.dispose(); _unitCtrl.dispose();
-    _notesCtrl.dispose(); _stockCtrl.dispose(); _lowAlertCtrl.dispose();
+    _nameCtrl.dispose();
+    _amountCtrl.dispose();
+    _unitCtrl.dispose();
+    _notesCtrl.dispose();
+    _stockCtrl.dispose();
+    _lowAlertCtrl.dispose();
     super.dispose();
   }
 
@@ -84,10 +160,56 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
     });
   }
 
+  void _updateFrequency(int value) {
+    setState(() {
+      _timesPerDay = value;
+      _reminderTimes.clear();
+      if (value == 1) {
+        _reminderTimes = [const TimeOfDay(hour: 8, minute: 0)];
+      } else if (value == 2) {
+        _reminderTimes = [const TimeOfDay(hour: 8, minute: 0), const TimeOfDay(hour: 20, minute: 0)];
+      } else if (value == 3) {
+        _reminderTimes = [const TimeOfDay(hour: 8, minute: 0), const TimeOfDay(hour: 14, minute: 0), const TimeOfDay(hour: 20, minute: 0)];
+      } else if (value == 4) {
+        _reminderTimes = [const TimeOfDay(hour: 8, minute: 0), const TimeOfDay(hour: 12, minute: 0), const TimeOfDay(hour: 16, minute: 0), const TimeOfDay(hour: 20, minute: 0)];
+      } else {
+        for (int i = 0; i < value; i++) {
+          _reminderTimes.add(TimeOfDay(hour: 8 + (i * 2), minute: 0));
+        }
+      }
+    });
+  }
+
+  Future<void> _pickTimeForIndex(int index) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTimes[index],
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryGreen,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textDark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _reminderTimes[index] = picked;
+      });
+    }
+  }
+
   void _save() {
     if (_nameCtrl.text.trim().isEmpty) return;
+
+    final String medId = const Uuid().v4();
     final med = Medicine(
-      id: const Uuid().v4(),
+      id: medId,
       userId: widget.currentUserId,
       name: _nameCtrl.text.trim(),
       description: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
@@ -98,11 +220,31 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
       frequencyPerDay: _timesPerDay,
       stockQuantity: int.tryParse(_stockCtrl.text) ?? 0,
       lowStockThreshold: int.tryParse(_lowAlertCtrl.text) ?? 5,
+      notes: _notesCtrl.text.trim(),
     );
-    context.read<MedicineBloc>().add(AddMedicine(med));
+
+    final now = DateTime.now();
+    List<Schedule> builtSchedules = [];
+    for (var time in _reminderTimes) {
+      final scheduleTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      final schedule = Schedule(
+        id: const Uuid().v4(),
+        medicineId: medId,
+        userId: widget.currentUserId,
+        startDate: now,
+        endDate: null,
+        reminderTime: scheduleTime,
+        repeatType: RepeatType.daily,
+        isActive: true,
+        notes: "Auto-generated from Medicine Wizard",
+      );
+      builtSchedules.add(schedule);
+    }
+    
+    context.read<MedicineBloc>().add(SaveCompleteMedicineBundle(med, builtSchedules));
   }
 
-  // ─── Step progress indicator ─────────────────────────────────────
+  // ─── UI ─────────────────────────────────────────────────────────
   Widget _buildProgress() {
     final labels = ['Type', 'Details', 'Schedule'];
     return Padding(
@@ -116,28 +258,38 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
               children: [
                 Row(
                   children: [
-                    if (i > 0) Expanded(child: Container(height: 2, color: done || active ? AppTheme.primaryGreen : Colors.grey.shade300)),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: active ? 32 : 26,
-                      height: active ? 32 : 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: done ? AppTheme.primaryGreen : (active ? AppTheme.primaryGreen : Colors.white),
-                        border: Border.all(color: active || done ? AppTheme.primaryGreen : Colors.grey.shade300, width: 2),
-                        boxShadow: active ? [BoxShadow(color: AppTheme.primaryGreen.withOpacity(0.3), blurRadius: 8, spreadRadius: 2)] : [],
-                      ),
-                      child: Center(
-                        child: done
-                            ? const Icon(Icons.check, size: 14, color: Colors.white)
-                            : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : Colors.grey)),
+                    if (i > 0) Expanded(child: Container(height: 3, color: done || active ? AppTheme.primaryGreen : Colors.white.withOpacity(0.5))),
+                    GestureDetector(
+                      onTap: () {
+                        if (i < _step) {
+                          _anim.reverse().then((_) {
+                            setState(() => _step = i);
+                            _anim.forward();
+                          });
+                        }
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: active ? 36 : 28,
+                        height: active ? 36 : 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: done ? AppTheme.primaryGreen : (active ? AppTheme.primaryGreen : Colors.white.withOpacity(0.6)),
+                          border: Border.all(color: active || done ? Colors.white : Colors.transparent, width: 3),
+                          boxShadow: active ? [BoxShadow(color: AppTheme.primaryGreen.withOpacity(0.4), blurRadius: 10)] : [],
+                        ),
+                        child: Center(
+                          child: done
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : Text('${i + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : AppTheme.textGrey)),
+                        ),
                       ),
                     ),
-                    if (i < 2) Expanded(child: Container(height: 2, color: done ? AppTheme.primaryGreen : Colors.grey.shade300)),
+                    if (i < 2) Expanded(child: Container(height: 3, color: done ? AppTheme.primaryGreen : Colors.white.withOpacity(0.5))),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(labels[i], style: TextStyle(fontSize: 11, fontWeight: active ? FontWeight.bold : FontWeight.w400, color: active ? AppTheme.primaryGreen : AppTheme.textGrey)),
+                const SizedBox(height: 8),
+                Text(labels[i], style: TextStyle(fontSize: 12, fontWeight: active ? FontWeight.bold : FontWeight.w600, color: active ? AppTheme.primaryGreen : AppTheme.textGrey)),
               ],
             ),
           );
@@ -146,216 +298,268 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
     );
   }
 
-  // ─── Step 0: Choose medicine type ───────────────────────────────
   Widget _buildStep0() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('What kind of medicine?', 'Tap the one that looks like yours'),
-        const SizedBox(height: 24),
+        _buildHeading('Medicine Type', 'What kind of medication is this?'),
+        const SizedBox(height: 32),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.85,
+            crossAxisCount: 3,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.85,
           ),
           itemCount: _typeOptions.length,
           itemBuilder: (ctx, i) {
             final opt = _typeOptions[i];
             final selected = _selectedType == opt.type;
+            
             return GestureDetector(
-              onTap: () => setState(() => _selectedType = opt.type),
+              onTap: () {
+                setState(() {
+                  _selectedType = opt.type;
+                  // Dynamic Unit default:
+                  _unitCtrl.text = _getVocabularyForType(opt.type).unitSuggestions.first;
+                });
+              },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
-                  color: selected ? AppTheme.primaryGreen.withOpacity(0.15) : Colors.white.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: selected ? AppTheme.primaryGreen : Colors.white.withOpacity(0.4), width: selected ? 2 : 1),
-                  boxShadow: selected ? [BoxShadow(color: AppTheme.primaryGreen.withOpacity(0.2), blurRadius: 8, spreadRadius: 1)] : [],
+                  color: selected ? opt.color.withOpacity(0.15) : Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: selected ? opt.color : Colors.white.withOpacity(0.5), width: 1.5),
+                  boxShadow: selected ? [BoxShadow(color: opt.color.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 8))] : [],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(opt.emoji, style: const TextStyle(fontSize: 28)),
-                    const SizedBox(height: 6),
-                    Text(opt.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: selected ? AppTheme.primaryGreen : AppTheme.textDark)),
-                  ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(opt.icon, size: 38, color: selected ? opt.color : AppTheme.textGrey.withOpacity(0.8)),
+                        const SizedBox(height: 12),
+                        Text(
+                          opt.label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                            color: selected ? opt.color : AppTheme.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             );
           },
         ),
-        const SizedBox(height: 32),
-        _buildNextButton('Continue →', _nextStep),
+        const SizedBox(height: 48),
+        _buildStepButton(label: 'Continue to Details', icon: Icons.arrow_forward_rounded, onPressed: _nextStep, isPrimary: true),
       ],
     );
   }
 
-  // ─── Step 1: Name, Amount, Unit ──────────────────────────────────
   Widget _buildStep1() {
     final opted = _typeOptions.firstWhere((o) => o.type == _selectedType);
+    final vocab = _getVocabularyForType(_selectedType);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('Tell us about it', 'Just the basics — nothing complicated!'),
-        const SizedBox(height: 24),
-        _buildGlassField(
+        _buildHeading('Medication Info', 'What should we call this medication?'),
+        const SizedBox(height: 32),
+        _buildUltraPremiumField(
           controller: _nameCtrl,
-          label: 'Medicine name',
-          hint: 'e.g. Panadol, Lipitor…',
-          icon: Text(opted.emoji, style: const TextStyle(fontSize: 22)),
+          label: 'Name (e.g., Panadol or Vitamin C)',
+          icon: Icon(opted.icon, color: opted.color),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               flex: 3,
-              child: _buildGlassField(
+              child: _buildUltraPremiumField(
                 controller: _amountCtrl,
-                label: 'How strong?',
-                hint: 'e.g. 500',
-                icon: const Icon(Icons.thermostat_outlined, color: AppTheme.primaryGreen),
+                label: vocab.amountLabel,
+                icon: const Icon(Icons.flash_on_rounded, color: Colors.amber),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: _buildGlassField(
+              child: _buildUltraPremiumField(
                 controller: _unitCtrl,
                 label: 'Unit',
-                hint: 'mg',
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        // Unit quick-picks
+        const SizedBox(height: 16),
         Wrap(
-          spacing: 8,
-          children: _unitSuggestions.map((u) {
+          spacing: 12,
+          runSpacing: 12,
+          children: vocab.unitSuggestions.map((u) {
             final sel = _unitCtrl.text == u;
-            return ActionChip(
-              label: Text(u),
-              backgroundColor: sel ? AppTheme.primaryGreen : Colors.white.withOpacity(0.7),
-              labelStyle: TextStyle(fontSize: 13, color: sel ? Colors.white : AppTheme.textDark, fontWeight: sel ? FontWeight.bold : FontWeight.normal),
-              side: BorderSide(color: sel ? AppTheme.primaryGreen : Colors.grey.shade300),
-              onPressed: () => setState(() => _unitCtrl.text = u),
+            return GestureDetector(
+              onTap: () => setState(() => _unitCtrl.text = u),
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                opacity: sel ? 1.0 : 0.4,
+                child: Text(
+                  u,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: sel ? AppTheme.primaryGreen : AppTheme.textGrey,
+                  ),
+                ),
+              ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 16),
-        _buildGlassField(
+        const SizedBox(height: 24),
+        _buildUltraPremiumField(
           controller: _notesCtrl,
-          label: 'Any notes? (Optional)',
-          hint: 'e.g. Take with food, after meal…',
-          icon: const Icon(Icons.sticky_note_2_outlined, color: AppTheme.textGrey),
+          label: 'Any special notes? (e.g., Take after food)',
+          icon: const Icon(Icons.info_outline_rounded, color: AppTheme.textGrey),
           maxLines: 2,
         ),
-        const SizedBox(height: 32),
-        Row(children: [
-          _buildBackButton(),
-          const SizedBox(width: 12),
-          Expanded(child: _buildNextButton('Continue →', _nameCtrl.text.isEmpty ? null : _nextStep)),
-        ]),
+        const SizedBox(height: 48),
+        Row(
+          children: [
+            _buildBackButton(),
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 4, 
+              child: _buildStepButton(label: 'Next: Timers', icon: Icons.schedule_rounded, onPressed: _nameCtrl.text.isEmpty ? null : _nextStep, isPrimary: true)
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  // ─── Step 2: Frequency + Stock ───────────────────────────────────
   Widget _buildStep2() {
+    final vocab = _getVocabularyForType(_selectedType);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('When do you take it?', 'Slide to set how many times a day'),
+        _buildHeading('When & How Many?', 'We will set up the alarms for you.'),
         const SizedBox(height: 24),
-        // Frequency visual slider
-        _buildGlassContainer(
+        GlassCard(
+          padding: const EdgeInsets.all(24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Times per day', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                  Expanded(child: Text(vocab.frequencyLabel, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5))),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(color: AppTheme.primaryGreen, borderRadius: BorderRadius.circular(20)),
-                    child: Text('$_timesPerDay ×', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                  ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(color: AppTheme.primaryGreen.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                    child: Text('$_timesPerDay Times', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                  )
                 ],
               ),
+              const SizedBox(height: 16),
               SliderTheme(
-                data: SliderThemeData(trackHeight: 6, thumbColor: AppTheme.primaryGreen, activeTrackColor: AppTheme.primaryGreen, inactiveTrackColor: AppTheme.primaryGreen.withOpacity(0.2), overlayColor: AppTheme.primaryGreen.withOpacity(0.1)),
+                data: SliderThemeData(
+                  trackHeight: 8, 
+                  thumbColor: AppTheme.primaryGreen, 
+                  activeTrackColor: AppTheme.primaryGreen, 
+                  inactiveTrackColor: AppTheme.primaryGreen.withOpacity(0.15)
+                ),
                 child: Slider(
                   value: _timesPerDay.toDouble(),
                   min: 1, max: 6, divisions: 5,
-                  onChanged: (v) => setState(() => _timesPerDay = v.round()),
+                  onChanged: (v) => _updateFrequency(v.round()),
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (i) {
-                  final v = i + 1;
-                  return Text('${v}x', style: TextStyle(fontSize: 11, color: v == _timesPerDay ? AppTheme.primaryGreen : AppTheme.textGrey, fontWeight: v == _timesPerDay ? FontWeight.bold : FontWeight.normal));
+              const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Divider(height: 1, thickness: 1)),
+              const Text('At what times?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+              const SizedBox(height: 16),
+              Column(
+                children: List.generate(_reminderTimes.length, (index) {
+                  return GestureDetector(
+                    onTap: () => _pickTimeForIndex(index),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: AppTheme.primaryGreen.withOpacity(0.1), shape: BoxShape.circle),
+                            child: const Icon(Icons.notifications_active_rounded, color: AppTheme.primaryGreen, size: 20),
+                          ),
+                          const SizedBox(width: 16),
+                          Text('Dose ${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                          const Spacer(),
+                          Text(
+                            _reminderTimes[index].format(context),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        _buildGlassContainer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('How many units do you have now?', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 4),
-              const Text('We\'ll track your stock automatically', style: TextStyle(color: AppTheme.textGrey, fontSize: 13)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildGlassField(
-                      controller: _stockCtrl,
-                      label: 'Current quantity',
-                      hint: 'e.g. 30',
-                      icon: const Icon(Icons.inventory_2_outlined, color: AppTheme.primaryGreen),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildGlassField(
-                      controller: _lowAlertCtrl,
-                      label: 'Alert me when below',
-                      hint: 'e.g. 5',
-                      icon: const Icon(Icons.notifications_outlined, color: Colors.orange),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: _buildUltraPremiumField(
+                controller: _stockCtrl,
+                label: vocab.stockLabel,
+                icon: const Icon(Icons.inventory_2_rounded, color: Colors.blueAccent),
+                keyboardType: TextInputType.number,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildUltraPremiumField(
+                controller: _lowAlertCtrl,
+                label: 'Refill warning at',
+                icon: const Icon(Icons.warning_rounded, color: Colors.orange),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 48),
         BlocBuilder<MedicineBloc, MedicineState>(
           builder: (ctx, state) {
             final isLoading = state is MedicineLoading;
             return Row(
               children: [
                 _buildBackButton(),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  flex: 4,
+                  child: _buildStepButton(
+                    label: 'Save & Activate',
+                    icon: Icons.double_arrow_rounded,
                     onPressed: isLoading ? null : _save,
-                    icon: isLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.check_circle_outline),
-                    label: const Text('Save Medicine'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 54),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
+                    isPrimary: true,
                   ),
                 ),
               ],
@@ -366,99 +570,116 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
     );
   }
 
-  // ─── Shared Widgets ───────────────────────────────────────────────
+  // ─── Ultra Premium UI Builders ──────────────────────────────────
   Widget _buildHeading(String title, String subtitle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
-        const SizedBox(height: 4),
-        Text(subtitle, style: const TextStyle(fontSize: 15, color: AppTheme.textGrey)),
+        Text(title, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: AppTheme.textDark, letterSpacing: -1.2)),
+        const SizedBox(height: 6),
+        Text(subtitle, style: const TextStyle(fontSize: 16, color: AppTheme.textGrey, fontWeight: FontWeight.w500)),
       ],
     );
   }
 
-  Widget _buildGlassContainer({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.65),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildGlassField(
-      {required TextEditingController controller, required String label, String? hint, Widget? icon, int maxLines = 1, TextInputType? keyboardType}) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      onChanged: (_) => setState(() {}),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: icon != null ? Padding(padding: const EdgeInsets.all(12), child: icon) : null,
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.6),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withOpacity(0.4))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2)),
+  Widget _buildUltraPremiumField({required TextEditingController controller, required String label, Widget? icon, int maxLines = 1, TextInputType? keyboardType}) {
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      opacity: 0.5,
+      blur: 20,
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textGrey),
+          prefixIcon: icon != null ? Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: icon) : null,
+          filled: true,
+          fillColor: Colors.transparent, // True glass effect
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2)),
+          contentPadding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        ),
       ),
     );
   }
 
-  Widget _buildNextButton(String label, VoidCallback? onPressed) {
+  Widget _buildStepButton({required String label, required IconData icon, required VoidCallback? onPressed, required bool isPrimary}) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: onPressed == null ? Colors.grey.shade300 : AppTheme.primaryGreen,
-        foregroundColor: onPressed == null ? AppTheme.textGrey : Colors.white,
-        minimumSize: const Size(double.infinity, 54),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: onPressed == null ? Colors.grey.shade400 : (isPrimary ? AppTheme.primaryGreen : Colors.white),
+        foregroundColor: onPressed == null ? Colors.white : (isPrimary ? Colors.white : AppTheme.primaryGreen),
+        elevation: isPrimary ? 8 : 0,
+        shadowColor: AppTheme.primaryGreen.withOpacity(0.5),
+        padding: const EdgeInsets.symmetric(vertical: 22),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+          const SizedBox(width: 8),
+          Icon(icon, size: 22),
+        ],
+      ),
     );
   }
 
   Widget _buildBackButton() {
-    return OutlinedButton(
-      onPressed: _prevStep,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(54, 54),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        side: BorderSide(color: AppTheme.primaryGreen.withOpacity(0.5)),
+    return Expanded(
+      flex: 2,
+      child: ElevatedButton(
+        onPressed: _prevStep,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withOpacity(0.4),
+          foregroundColor: AppTheme.textDark,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 22),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.white.withOpacity(0.8), width: 1.5),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            SizedBox(width: 6),
+            Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
-      child: const Icon(Icons.arrow_back_ios_new, color: AppTheme.primaryGreen),
     );
   }
 
-  // ─── Build ────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return BlocListener<MedicineBloc, MedicineState>(
-      listener: (ctx, state) {
-        if (state is MedicineLoaded) Navigator.of(context).pop();
-        if (state is MedicineError) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent));
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<MedicineBloc, MedicineState>(
+          listener: (ctx, state) {
+            if (state is MedicineLoaded) {
+              Navigator.of(context).pop();
+            }
+            if (state is MedicineError) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+            }
+          },
+        ),
+      ],
       child: Scaffold(
-        backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
+        backgroundColor: AppTheme.backgroundLight,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), shape: BoxShape.circle),
-              child: const Icon(Icons.close, size: 18, color: AppTheme.textDark),
-            ),
+            icon: GlassCard(padding: const EdgeInsets.all(10), opacity: 0.8, child: const Icon(Icons.close_rounded, color: AppTheme.textDark, size: 20)),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -472,7 +693,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
                   child: FadeTransition(
                     opacity: _fadeAnim,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: _step == 0 ? _buildStep0() : _step == 1 ? _buildStep1() : _buildStep2(),

@@ -14,6 +14,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<UpdateUserProfile>(_onUpdateUserProfile);
   }
 
   Future<void> _onAuthCheckRequested(
@@ -81,5 +82,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       LogoutRequested event, Emitter<AuthState> emit) async {
     await authRepository.logout();
     emit(Unauthenticated());
+  }
+
+  Future<void> _onUpdateUserProfile(
+      UpdateUserProfile event, Emitter<AuthState> emit) async {
+    try {
+      await authRepository.updateUser(event.user);
+      emit(Authenticated(event.user));
+    } catch (e) {
+      // Offline fallback: keep the state authenticated but don't crash
+      emit(Authenticated(event.user));
+    }
   }
 }

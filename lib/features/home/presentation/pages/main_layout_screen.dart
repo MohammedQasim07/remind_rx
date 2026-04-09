@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../features/medicine/presentation/pages/medicine_list_screen.dart';
 import 'dashboard_screen.dart';
 import '../../../dose_history/presentation/pages/daily_tracker_screen.dart';
+import '../../../../features/user/presentation/pages/settings_screen.dart';
 
 class MainLayoutScreen extends StatefulWidget {
   final String currentUserId;
@@ -26,7 +27,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
       DashboardScreen(currentUserId: widget.currentUserId),
       DailyTrackerScreen(userId: widget.currentUserId),
       MedicineListScreen(currentUserId: widget.currentUserId),
-      const Center(child: Text('Settings Screen Coming Soon')),
+      SettingsScreen(currentUserId: widget.currentUserId),
     ];
   }
 
@@ -72,7 +73,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard, 'Home'),
-                    _buildNavItem(1, Icons.today_outlined, Icons.today, 'Tracker'),
+                    _buildNavItem(1, Icons.analytics_outlined, Icons.analytics, 'Analytics'),
                     _buildNavItem(2, Icons.medication_outlined, Icons.medication, 'Meds'),
                     _buildNavItem(3, Icons.settings_outlined, Icons.settings, 'Settings'),
                   ],

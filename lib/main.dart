@@ -10,7 +10,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'core/network/api_client.dart';
 import 'core/services/notification_service.dart';
 import 'core/utils/timezone_helper.dart';
-
 import 'features/user/data/models/user_model.dart';
 import 'features/medicine/data/models/medicine_model.dart';
 import 'features/schedule/data/models/schedule_model.dart';
@@ -20,7 +19,6 @@ import 'features/medicine/data/datasources/medicine_local_data_source.dart';
 import 'features/medicine/data/datasources/medicine_remote_data_source.dart';
 import 'features/medicine/data/repositories/medicine_repository_impl.dart';
 import 'features/medicine/domain/repositories/medicine_repository.dart';
-
 import 'features/schedule/data/datasources/schedule_local_data_source.dart';
 import 'features/schedule/data/datasources/schedule_remote_data_source.dart';
 import 'features/schedule/data/repositories/schedule_repository_impl.dart';
@@ -31,11 +29,9 @@ import 'features/dose_history/data/datasources/dose_history_remote_data_source.d
 import 'features/dose_history/data/repositories/dose_history_repository_impl.dart';
 import 'features/dose_history/domain/repositories/dose_history_repository.dart';
 import 'features/dose_history/data/usecases/generate_dose_history_usecase_impl.dart';
-
 import 'features/user/data/datasources/user_remote_data_source.dart';
 import 'features/user/data/repositories/auth_repository_impl.dart';
 import 'features/user/domain/repositories/auth_repository.dart';
-
 import 'features/medicine/presentation/bloc/medicine_bloc.dart';
 import 'features/medicine/presentation/bloc/medicine_event.dart';
 import 'features/user/presentation/bloc/auth_bloc.dart';
@@ -139,7 +135,11 @@ class RemindRxApp extends StatelessWidget {
           create: (_) => AuthBloc(authRepository: authRepository)..add(AuthCheckRequested()),
         ),
         BlocProvider(
-          create: (_) => MedicineBloc(repository: medicineRepository),
+          create: (_) => MedicineBloc(
+            repository: medicineRepository,
+            scheduleRepository: scheduleRepository,
+            notificationService: notificationService,
+          ),
         ),
         BlocProvider(
           create: (_) => ScheduleBloc(
@@ -163,7 +163,7 @@ class RemindRxApp extends StatelessWidget {
         title: 'RemindRx',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        locale: const Locale('ar'),
+        locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: BlocBuilder<AuthBloc, AuthState>(

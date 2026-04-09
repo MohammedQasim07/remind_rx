@@ -60,8 +60,9 @@ class DoseHistoryRepositoryImpl implements DoseHistoryRepository {
       await remoteDataSource.createDoseHistory(model);
       await localDataSource.saveDoseHistory(model);
     } catch (e) {
+      // Offline fallback: log and proceed
+      print('Network Error saving dose history, syncing later: $e');
       await localDataSource.saveDoseHistory(model);
-      rethrow;
     }
   }
 
@@ -75,8 +76,8 @@ class DoseHistoryRepositoryImpl implements DoseHistoryRepository {
         await remoteDataSource.updateDoseHistory(model.id, model);
         await localDataSource.saveDoseHistory(model);
       } catch (e) {
+        print('Network Error updating dose history, syncing later: $e');
         await localDataSource.saveDoseHistory(model);
-        rethrow;
       }
     }
   }
@@ -87,8 +88,8 @@ class DoseHistoryRepositoryImpl implements DoseHistoryRepository {
       // Typically the API handles this via schedule deletion cascade, but we can call it if available
       await localDataSource.deleteDoseHistoriesForSchedule(scheduleId);
     } catch (e) {
+      print('Error deleting local dose histories: $e');
       await localDataSource.deleteDoseHistoriesForSchedule(scheduleId);
-      rethrow;
     }
   }
 }

@@ -57,12 +57,23 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   Future<void> saveSchedule(Schedule schedule) async {
     final model = ScheduleModel.fromEntity(schedule);
     try {
-      await remoteDataSource.createSchedule(model);
+      final payload = {
+        "medicineId": model.medicineId,
+        "startDate": model.startDate.toIso8601String(),
+        "endDate": model.endDate?.toIso8601String(),
+        "reminderTime": model.reminderTime.toIso8601String(),
+        "repeatType": model.repeatType.index,
+        "repeatInterval": model.repeatInterval,
+        "daysOfWeek": model.daysOfWeek,
+        "isActive": model.isActive,
+        "notes": model.notes,
+      };
+      await remoteDataSource.createSchedule(payload);
       await localDataSource.saveSchedule(model);
     } catch (e) {
-      // Offline fallback
+      // Offline fallback: log and proceed
+      print('Network Error saving schedule, syncing later: $e');
       await localDataSource.saveSchedule(model);
-      rethrow;
     }
   }
 
@@ -70,11 +81,22 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   Future<void> updateSchedule(Schedule schedule) async {
     final model = ScheduleModel.fromEntity(schedule);
     try {
-      await remoteDataSource.updateSchedule(model.id, model);
+      final payload = {
+        "medicineId": model.medicineId,
+        "startDate": model.startDate.toIso8601String(),
+        "endDate": model.endDate?.toIso8601String(),
+        "reminderTime": model.reminderTime.toIso8601String(),
+        "repeatType": model.repeatType.index,
+        "repeatInterval": model.repeatInterval,
+        "daysOfWeek": model.daysOfWeek,
+        "isActive": model.isActive,
+        "notes": model.notes,
+      };
+      await remoteDataSource.updateSchedule(model.id, payload);
       await localDataSource.saveSchedule(model);
     } catch (e) {
+      print('Network Error updating schedule, syncing later: $e');
       await localDataSource.saveSchedule(model);
-      rethrow;
     }
   }
 

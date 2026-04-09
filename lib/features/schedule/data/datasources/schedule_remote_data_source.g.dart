@@ -86,12 +86,12 @@ class _ScheduleRemoteDataSource implements ScheduleRemoteDataSource {
   }
 
   @override
-  Future<void> createSchedule(ScheduleModel schedule) async {
+  Future<void> createSchedule(Map<String, dynamic> body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    _data.addAll(schedule.toJson());
+    _data.addAll(body);
     await _dio.fetch<void>(_setStreamType<void>(Options(
       method: 'POST',
       headers: _headers,
@@ -113,13 +113,13 @@ class _ScheduleRemoteDataSource implements ScheduleRemoteDataSource {
   @override
   Future<void> updateSchedule(
     String id,
-    ScheduleModel schedule,
+    Map<String, dynamic> body,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    _data.addAll(schedule.toJson());
+    _data.addAll(body);
     await _dio.fetch<void>(_setStreamType<void>(Options(
       method: 'PUT',
       headers: _headers,

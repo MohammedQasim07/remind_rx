@@ -90,12 +90,12 @@ class _MedicineRemoteDataSource implements MedicineRemoteDataSource {
   }
 
   @override
-  Future<void> createMedicine(MedicineModel medicine) async {
+  Future<void> createMedicine(Map<String, dynamic> body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    _data.addAll(medicine.toJson());
+    _data.addAll(body);
     await _dio.fetch<void>(_setStreamType<void>(Options(
       method: 'POST',
       headers: _headers,
@@ -117,13 +117,13 @@ class _MedicineRemoteDataSource implements MedicineRemoteDataSource {
   @override
   Future<void> updateMedicine(
     String id,
-    MedicineModel medicine,
+    Map<String, dynamic> body,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
-    _data.addAll(medicine.toJson());
+    _data.addAll(body);
     await _dio.fetch<void>(_setStreamType<void>(Options(
       method: 'PUT',
       headers: _headers,

@@ -17,6 +17,15 @@ class LoadDailyDoseHistory extends DoseHistoryEvent {
   List<Object?> get props => [userId, date];
 }
 
+class LoadWeeklyDoseHistory extends DoseHistoryEvent {
+  final String userId;
+
+  const LoadWeeklyDoseHistory(this.userId);
+
+  @override
+  List<Object> get props => [userId];
+}
+
 class UpdateDoseStatus extends DoseHistoryEvent {
   final String historyId;
   final DoseStatus status;

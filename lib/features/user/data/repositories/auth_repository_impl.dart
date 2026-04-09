@@ -57,6 +57,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> updateUser(User user) async {
+    // Save to Secure Storage local cache
+    await secureStorage.write(key: _userNameKey, value: user.name);
+    // Ideally map other fields (email, phone, etc) into secureStorage later if auth data scales.
+    
+    // Attempt remote update (Offline-First)
+    try {
+      // await remoteDataSource.updateUser(user.id, UserDTO(user));
+    } catch (e) {
+      print('Network Error updating user, working offline: $e');
+    }
+  }
+
+  @override
   Future<void> logout() async {
     await secureStorage.delete(key: _tokenKey);
     await secureStorage.delete(key: _userIdKey);

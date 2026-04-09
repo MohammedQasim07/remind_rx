@@ -23,6 +23,13 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: Colors.transparent, // Required for the Mesh Gradient behind screens
       fontFamily: 'Inter',
+      textTheme: const TextTheme(
+        headlineMedium: TextStyle(fontWeight: FontWeight.w700, fontSize: 32, letterSpacing: -1.0, color: textDark),
+        titleLarge: TextStyle(fontWeight: FontWeight.w600, fontSize: 20, letterSpacing: -0.5, color: textDark),
+        titleMedium: TextStyle(fontWeight: FontWeight.w600, fontSize: 17, letterSpacing: -0.3, color: textDark),
+        bodyLarge: TextStyle(fontWeight: FontWeight.w400, fontSize: 17, color: textDark, letterSpacing: -0.1),
+        bodyMedium: TextStyle(fontWeight: FontWeight.w400, fontSize: 15, color: textGrey),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

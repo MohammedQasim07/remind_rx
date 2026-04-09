@@ -6,41 +6,45 @@ import '../../domain/entities/dose_history.dart';
 import '../bloc/dose_history_bloc.dart';
 import '../bloc/dose_history_event.dart';
 import '../bloc/dose_history_state.dart';
-import '../../../medicine/presentation/bloc/medicine_bloc.dart';
-import '../../../medicine/presentation/bloc/medicine_state.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_card.dart';
 
-class DailyTrackerScreen extends StatelessWidget {
+class DailyTrackerScreen extends StatefulWidget {
   final String userId;
 
   const DailyTrackerScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Initial fetch
-    context.read<DoseHistoryBloc>().add(LoadDailyDoseHistory(userId, DateTime.now()));
+  State<DailyTrackerScreen> createState() => _DailyTrackerScreenState();
+}
 
+class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
+  int? _selectedDaysAgo; // null means week overview
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<DoseHistoryBloc>().add(LoadWeeklyDoseHistory(widget.userId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Daily Tracker'),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.healthGradient,
-          ),
-        ),
+        title: const Text('Health Analytics', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
       ),
       body: BlocBuilder<DoseHistoryBloc, DoseHistoryState>(
         builder: (context, state) {
           if (state is DoseHistoryLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is DoseHistoryLoaded) {
-            if (state.dailyHistory.isEmpty) {
-              return _buildEmptyState(context);
-            }
-            return _buildDoseList(context, state.dailyHistory);
+            return _buildAnalyticsContent(context, state.dailyHistory);
           } else if (state is DoseHistoryError) {
-            return Center(child: Text(state.message));
+            return Center(child: Text(state.message, style: const TextStyle(color: Colors.redAccent)));
           }
           return const SizedBox.shrink();
         },
@@ -48,134 +52,265 @@ class DailyTrackerScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
+  Widget _buildAnalyticsContent(BuildContext context, List<DoseHistory> history) {
+    // 1. Process data for last 7 days chart (Always 7 days)
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    Map<int, Map<String, int>> dailyStats = {};
+    for (int i = 6; i >= 0; i--) {
+      dailyStats[i] = {'taken': 0, 'total': 0};
+    }
+
+    for (var dose in history) {
+      final doseDay = DateTime(dose.scheduledTime.year, dose.scheduledTime.month, dose.scheduledTime.day);
+      final differenceInDays = todayStart.difference(doseDay).inDays;
+      
+      if (differenceInDays >= 0 && differenceInDays <= 6) {
+        dailyStats[differenceInDays]!['total'] = dailyStats[differenceInDays]!['total']! + 1;
+        if (dose.status == DoseStatus.taken) {
+          dailyStats[differenceInDays]!['taken'] = dailyStats[differenceInDays]!['taken']! + 1;
+        }
+      }
+    }
+
+    // 2. Filter data for the Stats & Insights cards based on selection
+    List<DoseHistory> displayHistory = history;
+    String overviewTitle = "Weekly Overview";
+
+    if (_selectedDaysAgo != null) {
+      final selectedDate = todayStart.subtract(Duration(days: _selectedDaysAgo!));
+      displayHistory = history.where((h) => 
+        h.scheduledTime.year == selectedDate.year && 
+        h.scheduledTime.month == selectedDate.month && 
+        h.scheduledTime.day == selectedDate.day
+      ).toList();
+
+      if (_selectedDaysAgo == 0) {
+        overviewTitle = "Today's Overview";
+      } else if (_selectedDaysAgo == 1) {
+        overviewTitle = "Yesterday's Overview";
+      } else {
+        overviewTitle = "${DateFormat('EEEE').format(selectedDate)}'s Overview";
+      }
+    }
+
+    int totalScheduled = displayHistory.length;
+    int totalTaken = displayHistory.where((h) => h.status == DoseStatus.taken).length;
+    int totalSkippedOrMissed = displayHistory.where((h) => h.status == DoseStatus.skipped || h.status == DoseStatus.missed).length;
+    double adherence = totalScheduled > 0 ? (totalTaken / totalScheduled) : 0.0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10).copyWith(bottom: 120),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.calendar_today_outlined, size: 80, color: AppTheme.textGrey.withOpacity(0.3)),
-          const SizedBox(height: 16),
-          const Text(
-            'No doses scheduled for today',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textGrey),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Weekly Adherence', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+              if (_selectedDaysAgo != null)
+                GestureDetector(
+                  onTap: () => setState(() => _selectedDaysAgo = null),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: AppTheme.textGrey.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    child: const Text('Reset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text('Your medication schedule will appear here', style: TextStyle(color: AppTheme.textGrey)),
+          const SizedBox(height: 16),
+          _buildCustomBarChart(dailyStats, todayStart),
+
+          const SizedBox(height: 36),
+          Text(overviewTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+          const SizedBox(height: 16),
+          _buildStatsRow(totalScheduled, totalTaken, totalSkippedOrMissed),
+
+          const SizedBox(height: 36),
+          const Text('Actionable Insights', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+          const SizedBox(height: 16),
+          _buildInsightCard(adherence, totalScheduled, _selectedDaysAgo != null),
         ],
       ),
     );
   }
 
-  Widget _buildDoseList(BuildContext context, List<DoseHistory> history) {
-     // Sort by time
-    final sortedHistory = List<DoseHistory>.from(history)
-      ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: sortedHistory.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final item = sortedHistory[index];
-        return _buildDoseCard(context, item);
-      },
+  Widget _buildStatsRow(int total, int taken, int missed) {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildStatItem('Taken', taken.toString(), AppTheme.primaryGreen, Icons.check_circle_rounded),
+          Container(height: 40, width: 1, color: AppTheme.textGrey.withOpacity(0.2)),
+          _buildStatItem('Missed', missed.toString(), Colors.orange, Icons.warning_rounded),
+          Container(height: 40, width: 1, color: AppTheme.textGrey.withOpacity(0.2)),
+          _buildStatItem('Total', total.toString(), Colors.blueAccent, Icons.medication_rounded),
+        ],
+      ),
     );
   }
 
-  Widget _buildDoseCard(BuildContext context, DoseHistory dose) {
-    // Cross-reference medicine details from MedicineBloc
-    final medicineState = context.watch<MedicineBloc>().state;
-    String medicineName = 'Loading...';
-    String medicineDosage = '';
+  Widget _buildStatItem(String label, String value, Color color, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 12),
+        Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color, letterSpacing: -0.5)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textGrey, fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
 
-    if (medicineState is MedicineLoaded) {
-      final medicine = medicineState.medicines.firstWhere(
-        (m) => m.id == dose.medicineId,
-        orElse: () => medicineState.medicines.first, // Fallback (shouldn't happen)
-      );
-      medicineName = medicine.name;
-      medicineDosage = '${medicine.dosageAmount} ${medicine.dosageUnit ?? medicine.type.name}';
+  Widget _buildCustomBarChart(Map<int, Map<String, int>> dailyStats, DateTime today) {
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(7, (index) {
+                int daysAgo = 6 - index;
+                final stats = dailyStats[daysAgo]!;
+                final total = stats['total']!;
+                final taken = stats['taken']!;
+                
+                double percentage = total > 0 ? (taken / total) : 0.0;
+                if (total == 0) percentage = 0.05; 
+                
+                final date = today.subtract(Duration(days: daysAgo));
+                final dayLabel = DateFormat('EE').format(date).substring(0, 1);
+
+                final bool isSelected = _selectedDaysAgo == daysAgo;
+                final bool hasSelection = _selectedDaysAgo != null;
+
+                // Color logic: if a day is selected, others are faded.
+                final gradientColors = (hasSelection && !isSelected)
+                    ? [Colors.grey.withOpacity(0.2), Colors.grey.withOpacity(0.4)]
+                    : [AppTheme.primaryGreen.withOpacity(0.5), AppTheme.primaryGreen];
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (_selectedDaysAgo == daysAgo) {
+                        _selectedDaysAgo = null;
+                      } else {
+                        _selectedDaysAgo = daysAgo;
+                      }
+                    });
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        height: 140 * percentage,
+                        width: 28,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: gradientColors,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: isSelected ? [
+                            BoxShadow(color: AppTheme.primaryGreen.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 4))
+                          ] : null,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        dayLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: (daysAgo == 0 || isSelected) ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected ? AppTheme.primaryGreen : ((hasSelection) ? AppTheme.textGrey.withOpacity(0.5) : AppTheme.textDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightCard(double adherence, int totalDoses, bool isSingleDay) {
+    String title = "Getting Started";
+    String subtitle = isSingleDay ? "No doses scheduled for this day." : "Set up some schedules to see insights here!";
+    IconData icon = Icons.lightbulb_outline;
+    Color color = Colors.blueAccent;
+
+    if (totalDoses > 0) {
+      if (adherence >= 0.9) {
+        title = isSingleDay ? "Perfect Day!" : "Incredible Job!";
+        subtitle = isSingleDay 
+          ? "You took every single medication scheduled for this day." 
+          : "You are taking your medication perfectly. Keep up the phenomenal consistency.";
+        icon = Icons.emoji_events_rounded;
+        color = Colors.amber;
+      } else if (adherence >= 0.6) {
+        title = isSingleDay ? "Almost Perfect!" : "Doing Good!";
+        subtitle = isSingleDay
+          ? "You missed a quick dose, but otherwise you were on track!"
+          : "You are on track but missed a few doses. Stay focused for a better health outcome.";
+        icon = Icons.thumb_up_alt_rounded;
+        color = AppTheme.primaryGreen;
+      } else {
+        title = isSingleDay ? "Tough Day" : "Needs Attention!";
+        subtitle = isSingleDay
+          ? "A lot of doses were missed on this day. Remember, consistency is key!"
+          : "Your adherence is low this week. Consider adjusting your reminder times if you're frequently busy.";
+        icon = Icons.warning_amber_rounded;
+        color = Colors.orange;
+      }
     }
 
-    final isTaken = dose.status == DoseStatus.taken;
-    final isMissed = dose.status == DoseStatus.missed;
-    final timeStr = DateFormat('hh:mm a').format(dose.scheduledTime);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Time Side
-          Column(
-            children: [
-              Text(
-                timeStr,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.primaryGreen),
-              ),
-              const SizedBox(height: 4),
-              _buildStatusIndicator(dose.status),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 32),
           ),
-          const SizedBox(width: 20),
-          // Info Side
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  medicineName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    decoration: isTaken ? TextDecoration.lineThrough : null,
-                    color: isTaken ? AppTheme.textGrey : AppTheme.textDark,
-                  ),
+                  title,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
                 ),
-                Text(medicineDosage, style: const TextStyle(color: AppTheme.textGrey)),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 14, color: AppTheme.textGrey, height: 1.4),
+                ),
               ],
             ),
-          ),
-          // Action Button
-          if (!isTaken)
-            ElevatedButton(
-              onPressed: () => _markAsTaken(context, dose.id),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(80, 40),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Take'),
-            )
-          else
-            const Icon(Icons.check_circle, color: AppTheme.accentGreen, size: 32),
+          )
         ],
       ),
-      ),
     );
-  }
-
-  Widget _buildStatusIndicator(DoseStatus status) {
-    Color color = Colors.grey;
-    if (status == DoseStatus.taken) color = AppTheme.accentGreen;
-    if (status == DoseStatus.missed) color = Colors.redAccent;
-    if (status == DoseStatus.scheduled) color = AppTheme.primaryGreen;
-
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
-  void _markAsTaken(BuildContext context, String historyId) {
-    context.read<DoseHistoryBloc>().add(
-          UpdateDoseStatus(historyId: historyId, status: DoseStatus.taken, actualTime: DateTime.now()),
-        );
   }
 }

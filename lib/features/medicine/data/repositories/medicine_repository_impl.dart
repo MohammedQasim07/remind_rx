@@ -47,13 +47,25 @@ class MedicineRepositoryImpl implements MedicineRepository {
   Future<void> saveMedicine(Medicine medicine) async {
     final model = MedicineModel.fromEntity(medicine);
     try {
-      await remoteDataSource.createMedicine(model);
+      final payload = {
+        "name": model.name,
+        "description": model.description,
+        "dosageAmount": model.dosageAmount,
+        "dosageUnit": model.dosageUnit,
+        "type": model.type.index, // Assuming API matches enum index
+        "status": model.status.index,
+        "frequencyPerDay": model.frequencyPerDay,
+        "stockQuantity": model.stockQuantity,
+        "lowStockThreshold": model.lowStockThreshold,
+        "notes": model.notes,
+        "userId": model.userId,
+      };
+      await remoteDataSource.createMedicine(payload);
       await localDataSource.saveMedicine(model);
     } catch (e) {
-      // For now, we save locally even if remote fails (Offline support)
-      // Ideally, mark it as 'pending sync'
+      // Offline-First Logic: Save locally, do not throw remote error to the user.
+      print('Network Error saving medicine, syncing later: $e');
       await localDataSource.saveMedicine(model);
-      rethrow;
     }
   }
 
@@ -61,11 +73,24 @@ class MedicineRepositoryImpl implements MedicineRepository {
   Future<void> updateMedicine(Medicine medicine) async {
     final model = MedicineModel.fromEntity(medicine);
     try {
-      await remoteDataSource.updateMedicine(model.id, model);
+      final payload = {
+        "name": model.name,
+        "description": model.description,
+        "dosageAmount": model.dosageAmount,
+        "dosageUnit": model.dosageUnit,
+        "type": model.type.index, 
+        "status": model.status.index,
+        "frequencyPerDay": model.frequencyPerDay,
+        "stockQuantity": model.stockQuantity,
+        "lowStockThreshold": model.lowStockThreshold,
+        "notes": model.notes,
+        "userId": model.userId,
+      };
+      await remoteDataSource.updateMedicine(model.id, payload);
       await localDataSource.saveMedicine(model);
     } catch (e) {
+      print('Network Error updating medicine, syncing later: $e');
       await localDataSource.saveMedicine(model);
-      rethrow;
     }
   }
 

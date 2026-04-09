@@ -34,3 +34,22 @@ class DeleteMedicine extends MedicineEvent {
   @override
   List<Object> get props => [medicineId];
 }
+
+class SaveCompleteMedicineBundle extends MedicineEvent {
+  final Medicine medicine;
+  final List<dynamic> schedules; // Using dynamic here to avoid heavy import cycles in event, or we can just import Schedule
+
+  const SaveCompleteMedicineBundle(this.medicine, this.schedules);
+
+  @override
+  List<Object> get props => [medicine, schedules];
+}
+
+class UpdateMedicine extends MedicineEvent {
+  final Medicine medicine;
+
+  const UpdateMedicine(this.medicine);
+
+  @override
+  List<Object> get props => [medicine];
+}

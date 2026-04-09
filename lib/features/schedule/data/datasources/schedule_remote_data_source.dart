@@ -20,10 +20,10 @@ abstract class ScheduleRemoteDataSource {
   Future<ScheduleModel> getScheduleById(@Path("id") String id);
 
   @POST("/api/schedules")
-  Future<void> createSchedule(@Body() ScheduleModel schedule);
+  Future<void> createSchedule(@Body() Map<String, dynamic> body);
 
   @PUT("/api/schedules/{id}")
-  Future<void> updateSchedule(@Path("id") String id, @Body() ScheduleModel schedule);
+  Future<void> updateSchedule(@Path("id") String id, @Body() Map<String, dynamic> body);
 
   @DELETE("/api/schedules/{id}")
   Future<void> deleteSchedule(@Path("id") String id);

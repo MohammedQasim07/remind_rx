@@ -9,6 +9,7 @@ import '../bloc/schedule_bloc.dart';
 import '../bloc/schedule_event.dart';
 import '../bloc/schedule_state.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_card.dart';
 
 class AddScheduleScreen extends StatefulWidget {
   final Medicine medicine;
@@ -26,7 +27,7 @@ class AddScheduleScreen extends StatefulWidget {
 
 class _AddScheduleScreenState extends State<AddScheduleScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   DateTime _startDate = DateTime.now();
   DateTime? _endDate;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 8, minute: 0);
@@ -46,9 +47,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppTheme.primaryGreen,
               onPrimary: Colors.white,
+              surface: Colors.white,
               onSurface: AppTheme.textDark,
             ),
           ),
@@ -72,9 +74,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppTheme.primaryGreen,
               onPrimary: Colors.white,
+              surface: Colors.white,
               onSurface: AppTheme.textDark,
             ),
           ),
@@ -94,7 +97,6 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   }
 
   void _onSave() {
-    // Combine date and time
     final reminderDateTime = DateTime(
       _startDate.year,
       _startDate.month,
@@ -120,58 +122,71 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set Reminder'),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.healthGradient,
-          ),
-        ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.meshBackgroundGradient, // Apply global background explicitly here
       ),
-      body: BlocListener<ScheduleBloc, ScheduleState>(
-        listener: (context, state) {
-          if (state is ScheduleLoaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Schedule created successfully!'),
-                backgroundColor: AppTheme.primaryGreen,
-              ),
-            );
-            Navigator.of(context).pop();
-          } else if (state is ScheduleError) {
-             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
-            );
-          }
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildMedicineInfo(),
-                const SizedBox(height: 32),
-                _buildSectionTitle('Reminders'),
-                const SizedBox(height: 16),
-                _buildTimePickerCard(),
-                const SizedBox(height: 24),
-                _buildSectionTitle('Duration & Frequency'),
-                const SizedBox(height: 16),
-                _buildFrequencySelector(),
-                const SizedBox(height: 16),
-                _buildDatePickerCard(),
-                const SizedBox(height: 32),
-                _buildNotesField(),
-                const SizedBox(height: 48),
-                ElevatedButton(
-                  onPressed: _onSave,
-                  child: const Text('ACTIVATE SCHEDULE'),
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Let gradient show
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          title: const Text('Set Reminder', style: TextStyle(color: AppTheme.textDark)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: AppTheme.textDark),
+        ),
+        body: SafeArea(
+          child: BlocListener<ScheduleBloc, ScheduleState>(
+            listener: (context, state) {
+              if (state is ScheduleLoaded) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Schedule created successfully!'),
+                    backgroundColor: AppTheme.primaryGreen,
+                  ),
+                );
+                Navigator.of(context).pop();
+              } else if (state is ScheduleError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
+                );
+              }
+            },
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildMedicineInfo(),
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('Reminders'),
+                    const SizedBox(height: 16),
+                    _buildTimePickerCard(),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('Duration & Frequency'),
+                    const SizedBox(height: 16),
+                    _buildFrequencySelector(),
+                    const SizedBox(height: 16),
+                    _buildDatePickerCard(),
+                    const SizedBox(height: 32),
+                    _buildNotesField(),
+                    const SizedBox(height: 48),
+                    ElevatedButton(
+                      onPressed: _onSave,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text('ACTIVATE SCHEDULE', style: TextStyle(letterSpacing: 1.0)),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
         ),
@@ -180,22 +195,17 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   }
 
   Widget _buildMedicineInfo() {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryGreen.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.1)),
-      ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.primaryGreen,
+              color: AppTheme.primaryGreen.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.medication, color: Colors.white),
+            child: const Icon(Icons.vaccines, color: AppTheme.primaryGreen),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -204,7 +214,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               children: [
                 Text(
                   widget.medicine.name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
                 ),
                 Text(
                   '${widget.medicine.dosageAmount} ${widget.medicine.dosageUnit ?? widget.medicine.type.name}',
@@ -225,58 +235,48 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
         fontSize: 18,
         fontWeight: FontWeight.bold,
         color: AppTheme.textDark,
+        letterSpacing: -0.5,
       ),
     );
   }
 
   Widget _buildTimePickerCard() {
-    return InkWell(
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       onTap: () => _selectTime(context),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.1)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.access_time, color: AppTheme.primaryGreen),
-            const SizedBox(width: 16),
-            const Text('Pick Time', style: TextStyle(fontWeight: FontWeight.w600)),
-            const Spacer(),
-            Text(
-              _reminderTime.format(context),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryGreen,
-              ),
+      child: Row(
+        children: [
+          const Icon(Icons.access_time_rounded, color: AppTheme.primaryGreen),
+          const SizedBox(width: 16),
+          const Text('Pick Time', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+          const Spacer(),
+          Text(
+            _reminderTime.format(context),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryGreen,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildFrequencySelector() {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.1)),
-      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<RepeatType>(
           value: _repeatType,
           isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primaryGreen),
+          dropdownColor: Colors.white,
           onChanged: (v) => setState(() => _repeatType = v!),
           items: RepeatType.values.where((e) => e != RepeatType.none).map((type) {
             return DropdownMenuItem(
               value: type,
-              child: Text('Every \${type.name.capitalize()}'),
+              child: Text('Every ${type.name.capitalize()}', style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w600)),
             );
           }).toList(),
         ),
@@ -288,53 +288,41 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     return Row(
       children: [
         Expanded(
-          child: _buildDateTile(
-            label: 'Start Date',
-            date: _startDate,
+          child: GlassCard(
+            padding: const EdgeInsets.all(12),
             onTap: () => _selectDate(context, true),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Start Date', style: TextStyle(fontSize: 12, color: AppTheme.textGrey)),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('MMM dd, yyyy').format(_startDate),
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildDateTile(
-            label: 'Ends (Optional)',
-            date: _endDate,
+          child: GlassCard(
+            padding: const EdgeInsets.all(12),
             onTap: () => _selectDate(context, false),
-            isNullable: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Ends (Optional)', style: TextStyle(fontSize: 12, color: AppTheme.textGrey)),
+                const SizedBox(height: 4),
+                Text(
+                  _endDate != null ? DateFormat('MMM dd, yyyy').format(_endDate!) : 'Infinite',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                ),
+              ],
+            ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDateTile({
-    required String label,
-    required DateTime? date,
-    required VoidCallback onTap,
-    bool isNullable = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.1)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textGrey)),
-            const SizedBox(height: 4),
-            Text(
-              date != null ? DateFormat('MMM dd, yyyy').format(date) : 'Infinite',
-              style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -342,9 +330,23 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     return TextFormField(
       controller: _notesController,
       maxLines: 2,
-      decoration: const InputDecoration(
+      style: const TextStyle(color: AppTheme.textDark),
+      decoration: InputDecoration(
         labelText: 'Notes',
         hintText: 'e.g. Take with food',
+        labelStyle: const TextStyle(color: AppTheme.textGrey),
+        hintStyle: TextStyle(color: AppTheme.textGrey.withOpacity(0.5)),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.6),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
+        ),
       ),
     );
   }
@@ -353,6 +355,6 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
 extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
-    return "\${this[0].toUpperCase()}\${substring(1)}";
+    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
