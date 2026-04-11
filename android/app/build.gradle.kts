@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.healthcare.remind_rx"
-    compileSdk = 34
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
