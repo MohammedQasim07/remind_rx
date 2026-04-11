@@ -102,12 +102,10 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
 
   @override
   Future<void> deleteSchedule(String id) async {
-    try {
-      await remoteDataSource.deleteSchedule(id);
-      await localDataSource.deleteSchedule(id);
-    } catch (e) {
-      await localDataSource.deleteSchedule(id);
-      rethrow;
-    }
+    await localDataSource.deleteSchedule(id);
+    
+    remoteDataSource.deleteSchedule(id).catchError((e) {
+      print('Network Error deleting schedule sync: $e');
+    });
   }
 }

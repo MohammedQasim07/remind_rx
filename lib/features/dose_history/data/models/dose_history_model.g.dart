@@ -2029,27 +2029,25 @@ extension DoseHistoryModelQueryProperty
 
 DoseHistoryModel _$DoseHistoryModelFromJson(Map<String, dynamic> json) =>
     DoseHistoryModel()
-      ..isarId = (json['isarId'] as num).toInt()
       ..id = json['id'] as String
       ..scheduleId = json['scheduleId'] as String
       ..medicineId = json['medicineId'] as String
       ..userId = json['userId'] as String?
-      ..scheduledTime = DateTime.parse(json['scheduledTime'] as String)
-      ..actualTime = json['actualTime'] == null
+      ..scheduledTime = DateTime.parse(json['scheduledDateTime'] as String)
+      ..actualTime = json['takenDateTime'] == null
           ? null
-          : DateTime.parse(json['actualTime'] as String)
+          : DateTime.parse(json['takenDateTime'] as String)
       ..status = $enumDecode(_$DoseStatusEnumMap, json['status'])
       ..notes = json['notes'] as String?;
 
 Map<String, dynamic> _$DoseHistoryModelToJson(DoseHistoryModel instance) =>
     <String, dynamic>{
-      'isarId': instance.isarId,
       'id': instance.id,
       'scheduleId': instance.scheduleId,
       'medicineId': instance.medicineId,
       'userId': instance.userId,
-      'scheduledTime': instance.scheduledTime.toIso8601String(),
-      'actualTime': instance.actualTime?.toIso8601String(),
+      'scheduledDateTime': instance.scheduledTime.toIso8601String(),
+      'takenDateTime': instance.actualTime?.toIso8601String(),
       'status': _$DoseStatusEnumMap[instance.status]!,
       'notes': instance.notes,
     };

@@ -10,6 +10,10 @@ import '../bloc/schedule_event.dart';
 import '../bloc/schedule_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
+import '../../../../core/utils/snackbar_helper.dart';
+import '../../../../core/widgets/premium_time_picker.dart';
+import '../../../../core/widgets/premium_date_picker.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
 
 class AddScheduleScreen extends StatefulWidget {
   final Medicine medicine;
@@ -41,22 +45,9 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   }
 
   Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
+    final TimeOfDay? picked = await PremiumTimePicker.show(
+      context,
       initialTime: _reminderTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryGreen,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppTheme.textDark,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null && picked != _reminderTime) {
       setState(() {
@@ -66,24 +57,13 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
+    final l10n = AppLocalizations.of(context)!;
+    final DateTime? picked = await PremiumDatePicker.show(
+      context,
+      title: isStartDate ? l10n.startDateLabel : l10n.endsOptional,
       initialDate: isStartDate ? _startDate : (_endDate ?? _startDate.add(const Duration(days: 30))),
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryGreen,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppTheme.textDark,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
@@ -130,7 +110,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
         backgroundColor: Colors.transparent, // Let gradient show
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          title: const Text('Set Reminder', style: TextStyle(color: AppTheme.textDark)),
+          title: Text(AppLocalizations.of(context)!.setReminder, style: const TextStyle(color: AppTheme.textDark)),
           backgroundColor: Colors.transparent,
           elevation: 0,
           iconTheme: const IconThemeData(color: AppTheme.textDark),
@@ -139,17 +119,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
           child: BlocListener<ScheduleBloc, ScheduleState>(
             listener: (context, state) {
               if (state is ScheduleLoaded) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Schedule created successfully!'),
-                    backgroundColor: AppTheme.primaryGreen,
-                  ),
-                );
+                SnackbarHelper.showSuccess(context, AppLocalizations.of(context)!.scheduleCreated);
                 Navigator.of(context).pop();
               } else if (state is ScheduleError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
-                );
+                SnackbarHelper.showError(context, state.message);
               }
             },
             child: SingleChildScrollView(
@@ -159,19 +132,19 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildMedicineInfo(),
+                    _buildMedicineInfo(context),
                     const SizedBox(height: 32),
-                    _buildSectionTitle('Reminders'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.remindersLabel),
                     const SizedBox(height: 16),
-                    _buildTimePickerCard(),
+                    _buildTimePickerCard(context),
                     const SizedBox(height: 24),
-                    _buildSectionTitle('Duration & Frequency'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.durationAndFrequency),
                     const SizedBox(height: 16),
-                    _buildFrequencySelector(),
+                    _buildFrequencySelector(context),
                     const SizedBox(height: 16),
-                    _buildDatePickerCard(),
+                    _buildDatePickerCard(context),
                     const SizedBox(height: 32),
-                    _buildNotesField(),
+                    _buildNotesField(context),
                     const SizedBox(height: 48),
                     ElevatedButton(
                       onPressed: _onSave,
@@ -181,7 +154,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                         minimumSize: const Size(double.infinity, 56),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: const Text('ACTIVATE SCHEDULE', style: TextStyle(letterSpacing: 1.0)),
+                      child: Text(AppLocalizations.of(context)!.activateSchedule, style: const TextStyle(letterSpacing: 1.0, fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -194,7 +167,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     );
   }
 
-  Widget _buildMedicineInfo() {
+  Widget _buildMedicineInfo(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -217,7 +190,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
                 ),
                 Text(
-                  '${widget.medicine.dosageAmount} ${widget.medicine.dosageUnit ?? widget.medicine.type.name}',
+                  '${widget.medicine.dosageAmount} ${_getLocalizedUnit(context, widget.medicine.dosageUnit ?? widget.medicine.type.name)}',
                   style: const TextStyle(color: AppTheme.textGrey),
                 ),
               ],
@@ -240,7 +213,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     );
   }
 
-  Widget _buildTimePickerCard() {
+  Widget _buildTimePickerCard(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       onTap: () => _selectTime(context),
@@ -248,7 +221,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
         children: [
           const Icon(Icons.access_time_rounded, color: AppTheme.primaryGreen),
           const SizedBox(width: 16),
-          const Text('Pick Time', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+          Text(AppLocalizations.of(context)!.pickTime, style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
           const Spacer(),
           Text(
             _reminderTime.format(context),
@@ -263,7 +236,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     );
   }
 
-  Widget _buildFrequencySelector() {
+  Widget _buildFrequencySelector(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: DropdownButtonHideUnderline(
@@ -276,7 +249,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
           items: RepeatType.values.where((e) => e != RepeatType.none).map((type) {
             return DropdownMenuItem(
               value: type,
-              child: Text('Every ${type.name.capitalize()}', style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w600)),
+              child: Text(_getLocalizedRepeatType(context, type), style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w600)),
             );
           }).toList(),
         ),
@@ -284,7 +257,8 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     );
   }
 
-  Widget _buildDatePickerCard() {
+  Widget _buildDatePickerCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -294,7 +268,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Start Date', style: TextStyle(fontSize: 12, color: AppTheme.textGrey)),
+                Text(l10n.startDateLabel, style: const TextStyle(fontSize: 12, color: AppTheme.textGrey)),
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('MMM dd, yyyy').format(_startDate),
@@ -312,10 +286,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Ends (Optional)', style: TextStyle(fontSize: 12, color: AppTheme.textGrey)),
+                Text(l10n.endsOptional, style: const TextStyle(fontSize: 12, color: AppTheme.textGrey)),
                 const SizedBox(height: 4),
                 Text(
-                  _endDate != null ? DateFormat('MMM dd, yyyy').format(_endDate!) : 'Infinite',
+                  _endDate != null ? DateFormat('MMM dd, yyyy').format(_endDate!) : l10n.infinite,
                   style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark),
                 ),
               ],
@@ -326,14 +300,15 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     );
   }
 
-  Widget _buildNotesField() {
+  Widget _buildNotesField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return TextFormField(
       controller: _notesController,
       maxLines: 2,
       style: const TextStyle(color: AppTheme.textDark),
       decoration: InputDecoration(
-        labelText: 'Notes',
-        hintText: 'e.g. Take with food',
+        labelText: l10n.notesLabel,
+        hintText: l10n.notesHint,
         labelStyle: const TextStyle(color: AppTheme.textGrey),
         hintStyle: TextStyle(color: AppTheme.textGrey.withOpacity(0.5)),
         filled: true,
@@ -349,6 +324,30 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
         ),
       ),
     );
+  }
+
+  String _getLocalizedUnit(BuildContext context, String unit) {
+    final l10n = AppLocalizations.of(context)!;
+    if (unit.toLowerCase().contains('pill')) return l10n.unitPill;
+    if (unit.toLowerCase().contains('mg')) return l10n.unitMg;
+    if (unit.toLowerCase().contains('ml')) return l10n.unitMl;
+    return unit;
+  }
+
+  String _getLocalizedRepeatType(BuildContext context, RepeatType type) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (type) {
+      case RepeatType.daily:
+        return l10n.everyDay;
+      case RepeatType.weekly:
+        return l10n.everyWeek;
+      case RepeatType.monthly:
+        return l10n.everyMonth;
+      case RepeatType.custom:
+        return 'Custom / مخصص';
+      default:
+        return '';
+    }
   }
 }
 

@@ -1,13 +1,16 @@
 import 'package:isar/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/dose_history.dart';
+import '../../../../core/utils/hash_helper.dart';
 
 part 'dose_history_model.g.dart';
 
 @collection
 @JsonSerializable()
 class DoseHistoryModel {
-  Id isarId = Isar.autoIncrement;
+  @JsonKey(ignore: true)
+  Id get isarId => HashHelper.fastHash(id);
+  set isarId(Id value) {}
 
   @Index(unique: true)
   late String id;
@@ -22,8 +25,10 @@ class DoseHistoryModel {
   String? userId;
 
   @Index()
+  @JsonKey(name: 'scheduledDateTime')
   late DateTime scheduledTime;
 
+  @JsonKey(name: 'takenDateTime')
   DateTime? actualTime;
 
   @enumerated

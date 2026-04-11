@@ -17,64 +17,69 @@ const UserModelSchema = CollectionSchema(
   name: r'UserModel',
   id: 7195426469378571114,
   properties: {
-    r'city': PropertySchema(
+    r'avatarPath': PropertySchema(
       id: 0,
+      name: r'avatarPath',
+      type: IsarType.string,
+    ),
+    r'city': PropertySchema(
+      id: 1,
       name: r'city',
       type: IsarType.string,
     ),
     r'country': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'country',
       type: IsarType.string,
     ),
     r'dateOfBirth': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'dateOfBirth',
       type: IsarType.dateTime,
     ),
     r'email': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'email',
       type: IsarType.string,
     ),
     r'gender': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'gender',
       type: IsarType.byte,
       enumMap: _UserModelgenderEnumValueMap,
     ),
     r'id': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'id',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'name',
       type: IsarType.string,
     ),
     r'nationality': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'nationality',
       type: IsarType.string,
     ),
     r'occupation': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'occupation',
       type: IsarType.string,
     ),
     r'phone': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'phone',
       type: IsarType.string,
     ),
     r'phoneCountryCode': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'phoneCountryCode',
       type: IsarType.string,
     ),
     r'role': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'role',
       type: IsarType.byte,
       enumMap: _UserModelroleEnumValueMap,
@@ -115,6 +120,12 @@ int _userModelEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.avatarPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.city;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -152,18 +163,19 @@ void _userModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.city);
-  writer.writeString(offsets[1], object.country);
-  writer.writeDateTime(offsets[2], object.dateOfBirth);
-  writer.writeString(offsets[3], object.email);
-  writer.writeByte(offsets[4], object.gender.index);
-  writer.writeString(offsets[5], object.id);
-  writer.writeString(offsets[6], object.name);
-  writer.writeString(offsets[7], object.nationality);
-  writer.writeString(offsets[8], object.occupation);
-  writer.writeString(offsets[9], object.phone);
-  writer.writeString(offsets[10], object.phoneCountryCode);
-  writer.writeByte(offsets[11], object.role.index);
+  writer.writeString(offsets[0], object.avatarPath);
+  writer.writeString(offsets[1], object.city);
+  writer.writeString(offsets[2], object.country);
+  writer.writeDateTime(offsets[3], object.dateOfBirth);
+  writer.writeString(offsets[4], object.email);
+  writer.writeByte(offsets[5], object.gender.index);
+  writer.writeString(offsets[6], object.id);
+  writer.writeString(offsets[7], object.name);
+  writer.writeString(offsets[8], object.nationality);
+  writer.writeString(offsets[9], object.occupation);
+  writer.writeString(offsets[10], object.phone);
+  writer.writeString(offsets[11], object.phoneCountryCode);
+  writer.writeByte(offsets[12], object.role.index);
 }
 
 UserModel _userModelDeserialize(
@@ -173,22 +185,23 @@ UserModel _userModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = UserModel();
-  object.city = reader.readStringOrNull(offsets[0]);
-  object.country = reader.readStringOrNull(offsets[1]);
-  object.dateOfBirth = reader.readDateTimeOrNull(offsets[2]);
-  object.email = reader.readString(offsets[3]);
+  object.avatarPath = reader.readStringOrNull(offsets[0]);
+  object.city = reader.readStringOrNull(offsets[1]);
+  object.country = reader.readStringOrNull(offsets[2]);
+  object.dateOfBirth = reader.readDateTimeOrNull(offsets[3]);
+  object.email = reader.readString(offsets[4]);
   object.gender =
-      _UserModelgenderValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+      _UserModelgenderValueEnumMap[reader.readByteOrNull(offsets[5])] ??
           Gender.male;
-  object.id = reader.readString(offsets[5]);
+  object.id = reader.readString(offsets[6]);
   object.isarId = id;
-  object.name = reader.readString(offsets[6]);
-  object.nationality = reader.readStringOrNull(offsets[7]);
-  object.occupation = reader.readStringOrNull(offsets[8]);
-  object.phone = reader.readString(offsets[9]);
-  object.phoneCountryCode = reader.readString(offsets[10]);
+  object.name = reader.readString(offsets[7]);
+  object.nationality = reader.readStringOrNull(offsets[8]);
+  object.occupation = reader.readStringOrNull(offsets[9]);
+  object.phone = reader.readString(offsets[10]);
+  object.phoneCountryCode = reader.readString(offsets[11]);
   object.role =
-      _UserModelroleValueEnumMap[reader.readByteOrNull(offsets[11])] ??
+      _UserModelroleValueEnumMap[reader.readByteOrNull(offsets[12])] ??
           Role.superAdmin;
   return object;
 }
@@ -205,25 +218,27 @@ P _userModelDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
       return (_UserModelgenderValueEnumMap[reader.readByteOrNull(offset)] ??
           Gender.male) as P;
-    case 5:
-      return (reader.readString(offset)) as P;
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
       return (reader.readString(offset)) as P;
     case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (_UserModelroleValueEnumMap[reader.readByteOrNull(offset)] ??
           Role.superAdmin) as P;
     default:
@@ -445,6 +460,157 @@ extension UserModelQueryWhere
 
 extension UserModelQueryFilter
     on QueryBuilder<UserModel, UserModel, QFilterCondition> {
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'avatarPath',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      avatarPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'avatarPath',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'avatarPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      avatarPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'avatarPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'avatarPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'avatarPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      avatarPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'avatarPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'avatarPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'avatarPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition> avatarPathMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'avatarPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      avatarPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'avatarPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterFilterCondition>
+      avatarPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'avatarPath',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterFilterCondition> cityIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1936,6 +2102,18 @@ extension UserModelQueryLinks
     on QueryBuilder<UserModel, UserModel, QFilterCondition> {}
 
 extension UserModelQuerySortBy on QueryBuilder<UserModel, UserModel, QSortBy> {
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByAvatarPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByAvatarPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterSortBy> sortByCity() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'city', Sort.asc);
@@ -2084,6 +2262,18 @@ extension UserModelQuerySortBy on QueryBuilder<UserModel, UserModel, QSortBy> {
 
 extension UserModelQuerySortThenBy
     on QueryBuilder<UserModel, UserModel, QSortThenBy> {
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByAvatarPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByAvatarPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QAfterSortBy> thenByCity() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'city', Sort.asc);
@@ -2244,6 +2434,13 @@ extension UserModelQuerySortThenBy
 
 extension UserModelQueryWhereDistinct
     on QueryBuilder<UserModel, UserModel, QDistinct> {
+  QueryBuilder<UserModel, UserModel, QDistinct> distinctByAvatarPath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'avatarPath', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<UserModel, UserModel, QDistinct> distinctByCity(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2335,6 +2532,12 @@ extension UserModelQueryProperty
     });
   }
 
+  QueryBuilder<UserModel, String?, QQueryOperations> avatarPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'avatarPath');
+    });
+  }
+
   QueryBuilder<UserModel, String?, QQueryOperations> cityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'city');
@@ -2413,7 +2616,6 @@ extension UserModelQueryProperty
 // **************************************************************************
 
 UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel()
-  ..isarId = (json['isarId'] as num).toInt()
   ..id = json['id'] as String
   ..name = json['name'] as String
   ..email = json['email'] as String
@@ -2427,10 +2629,10 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel()
   ..nationality = json['nationality'] as String?
   ..city = json['city'] as String?
   ..country = json['country'] as String?
-  ..occupation = json['occupation'] as String?;
+  ..occupation = json['occupation'] as String?
+  ..avatarPath = json['avatarPath'] as String?;
 
 Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
-      'isarId': instance.isarId,
       'id': instance.id,
       'name': instance.name,
       'email': instance.email,
@@ -2443,6 +2645,7 @@ Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
       'city': instance.city,
       'country': instance.country,
       'occupation': instance.occupation,
+      'avatarPath': instance.avatarPath,
     };
 
 const _$RoleEnumMap = {

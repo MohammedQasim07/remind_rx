@@ -1,13 +1,16 @@
 import 'package:isar/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/schedule.dart';
+import '../../../../core/utils/hash_helper.dart';
 
 part 'schedule_model.g.dart';
 
 @collection
 @JsonSerializable()
 class ScheduleModel {
-  Id isarId = Isar.autoIncrement;
+  @JsonKey(ignore: true)
+  Id get isarId => HashHelper.fastHash(id);
+  set isarId(Id value) {}
 
   @Index(unique: true)
   late String id;

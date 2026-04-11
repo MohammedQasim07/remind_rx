@@ -2,18 +2,23 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/user.dart';
 import '../datasources/user_remote_data_source.dart';
+import '../datasources/user_local_data_source.dart';
 import '../models/auth_models.dart';
+import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final UserRemoteDataSource remoteDataSource;
+  final UserLocalDataSource localDataSource;
   final FlutterSecureStorage secureStorage;
   static const String _tokenKey = 'jwt_token';
   static const String _userIdKey = 'user_id';
   static const String _userNameKey = 'user_name';
+  static const String _userAvatarKey = 'user_avatar';
   static const String _userRoleKey = 'user_role';
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
+    required this.localDataSource,
     required this.secureStorage,
   });
 
@@ -44,15 +49,38 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Future<void> _saveAuthData(AuthResponse response) async {
+    print('AuthRepository: Saving auth data. Success: ${response.isSuccess}');
     if (response.isSuccess && response.data != null) {
-      if (response.data!.token != null) {
-        await secureStorage.write(key: _tokenKey, value: response.data!.token!);
+      final data = response.data!;
+      print('AuthRepository: User ID: ${data.userId}, Name: ${data.name}');
+      
+      if (data.token != null && data.token!.isNotEmpty) {
+        await secureStorage.write(key: _tokenKey, value: data.token!);
       }
-      await secureStorage.write(key: _userIdKey, value: response.data!.userId);
-      await secureStorage.write(key: _userNameKey, value: response.data!.name);
-      if (response.data!.role != null) {
-        await secureStorage.write(key: _userRoleKey, value: response.data!.role!);
+      
+      await secureStorage.write(key: _userIdKey, value: data.userId);
+      await secureStorage.write(key: _userNameKey, value: data.name);
+      if (data.role != null) {
+        await secureStorage.write(key: _userRoleKey, value: data.role!);
       }
+      
+      // Save or update Isar generic memory
+      var localUser = await localDataSource.getUserById(data.userId);
+      if (localUser == null) {
+        localUser = UserModel()
+          ..id = data.userId
+          ..name = data.name ?? 'User'
+          ..email = ''
+          ..phone = ''
+          ..phoneCountryCode = ''
+          ..role = Role.patient
+          ..gender = Gender.other;
+        await localDataSource.saveUser(localUser);
+      }
+      
+      print('AuthRepository: Auth data saved successfully.');
+    } else {
+      print('AuthRepository: Skipping save. Success: ${response.isSuccess}, Data: ${response.data != null}');
     }
   }
 
@@ -60,7 +88,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> updateUser(User user) async {
     // Save to Secure Storage local cache
     await secureStorage.write(key: _userNameKey, value: user.name);
-    // Ideally map other fields (email, phone, etc) into secureStorage later if auth data scales.
+    if (user.avatarPath != null) {
+      await secureStorage.write(key: _userAvatarKey, value: user.avatarPath!);
+    }
+    
+    // Subconscious Memory: Persist fully in Isar Database
+    await localDataSource.saveUser(UserModel.fromEntity(user));
     
     // Attempt remote update (Offline-First)
     try {
@@ -75,6 +108,7 @@ class AuthRepositoryImpl implements AuthRepository {
     await secureStorage.delete(key: _tokenKey);
     await secureStorage.delete(key: _userIdKey);
     await secureStorage.delete(key: _userNameKey);
+    await secureStorage.delete(key: _userAvatarKey);
     await secureStorage.delete(key: _userRoleKey);
   }
 
@@ -93,9 +127,18 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<User> getCurrentUser() async {
     final userId = await secureStorage.read(key: _userIdKey);
     final userName = await secureStorage.read(key: _userNameKey);
+    final userAvatar = await secureStorage.read(key: _userAvatarKey);
     
-    if (userId == null || userName == null) {
-      throw Exception("User data not found locally. Please login again.");
+    print('AuthRepository: Reading local user. ID: $userId, Name: $userName');
+    
+    if (userId == null || userId.isEmpty || userName == null || userName.isEmpty) {
+      throw Exception("User data missing or invalid (ID: $userId, Name: $userName). Please login again.");
+    }
+    
+    // Subconscious Memory Magic: Retrieve user profile robustly from Isar Database
+    final localUser = await localDataSource.getUserById(userId);
+    if (localUser != null) {
+       return localUser.toEntity();
     }
     
     // Return a locally constructed User using data stored during login.
@@ -108,6 +151,7 @@ class AuthRepositoryImpl implements AuthRepository {
       phoneCountryCode: '',
       role: Role.patient, // Fallback/Default
       gender: Gender.other,
+      avatarPath: userAvatar,
     );
   }
 }

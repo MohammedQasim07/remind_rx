@@ -61,14 +61,36 @@ class DashboardSummaryBloc extends Bloc<DashboardSummaryEvent, DashboardSummaryS
 
   Future<void> _onMarkDoseStatus(MarkDoseStatus event, Emitter<DashboardSummaryState> emit) async {
     try {
+      if (state is DashboardSummaryLoaded) {
+        final currentState = state as DashboardSummaryLoaded;
+        // 1. Optimistic memory patch
+        final updatedItems = currentState.doseItems.map((item) {
+          if (item.history.id == event.historyId) {
+             final updatedHistory = item.history.copyWith(status: event.status, actualTime: event.actualTime);
+             return DashboardDoseItem(history: updatedHistory, medicine: item.medicine);
+          }
+          return item;
+        }).toList();
+        
+        int taken = updatedItems.where((i) => i.history.status == DoseStatus.taken).length;
+        int pending = updatedItems.where((i) => i.history.status == DoseStatus.scheduled || i.history.status == DoseStatus.missed).length;
+        
+        emit(DashboardSummaryLoaded(
+           doseItems: updatedItems,
+           totalDoses: currentState.totalDoses,
+           takenDoses: taken,
+           pendingDoses: pending,
+        ));
+      }
+
+      // 2. Persist to DB securely
       await doseHistoryRepository.updateDoseHistoryStatus(
         event.historyId,
         event.status,
         event.actualTime,
       );
-      // We rely on UI to re-dispatch LoadDashboardSummary immediately to refresh.
     } catch (e) {
-      // In a more complex setup, we'd emit a side-effect error here.
+      // In a more complex setup, we'd emit a side-effect error or rollback here.
     }
   }
 }

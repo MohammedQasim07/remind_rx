@@ -37,6 +37,7 @@ RegisterRequest _$RegisterRequestFromJson(Map<String, dynamic> json) =>
       city: json['city'] as String?,
       country: json['country'] as String?,
       occupation: json['occupation'] as String?,
+      avatarPath: json['avatarPath'] as String?,
     );
 
 Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
@@ -53,6 +54,7 @@ Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
       'city': instance.city,
       'country': instance.country,
       'occupation': instance.occupation,
+      'avatarPath': instance.avatarPath,
     };
 
 const _$RoleEnumMap = {
@@ -68,7 +70,7 @@ const _$GenderEnumMap = {
 };
 
 AuthData _$AuthDataFromJson(Map<String, dynamic> json) => AuthData(
-      userId: json['userId'] as String,
+      userId: json['userId'] as String? ?? '',
       name: json['name'] as String,
       role: json['role'] as String?,
       token: json['token'] as String?,
@@ -82,11 +84,11 @@ Map<String, dynamic> _$AuthDataToJson(AuthData instance) => <String, dynamic>{
     };
 
 AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) => AuthResponse(
-      isSuccess: json['isSuccess'] as bool,
+      isSuccess: json['isSuccess'] as bool? ?? false,
       data: json['data'] == null
           ? null
           : AuthData.fromJson(json['data'] as Map<String, dynamic>),
-      msg: json['msg'] as String?,
+      msg: json['message'] as String?,
       statusCode: (json['statusCode'] as num).toInt(),
     );
 
@@ -94,6 +96,6 @@ Map<String, dynamic> _$AuthResponseToJson(AuthResponse instance) =>
     <String, dynamic>{
       'isSuccess': instance.isSuccess,
       'data': instance.data,
-      'msg': instance.msg,
+      'message': instance.msg,
       'statusCode': instance.statusCode,
     };

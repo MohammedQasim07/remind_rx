@@ -46,10 +46,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final user = await authRepository.getCurrentUser();
         emit(Authenticated(user));
       } else {
-        emit(AuthError(response.msg ?? 'Login failed'));
+        final errorMsg = response.msg ?? 'Login failed (Status: ${response.statusCode})';
+        emit(AuthError(errorMsg));
       }
     } catch (e) {
-      emit(AuthError('Login Failed: \${e.toString()}'));
+      print('AuthBloc: Login Error: $e');
+      emit(AuthError(e.toString().replaceAll('Exception:', '').trim()));
     }
   }
 
@@ -72,10 +74,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final user = await authRepository.getCurrentUser();
         emit(Authenticated(user));
       } else {
-        emit(AuthError(response.msg ?? 'Registration failed'));
+        final errorMsg = response.msg ?? 'Registration failed (Status: ${response.statusCode})';
+        emit(AuthError(errorMsg));
       }
     } catch (e) {
-      emit(AuthError('Registration Failed: \${e.toString()}'));
+      print('AuthBloc: Registration Error: $e');
+      emit(AuthError(e.toString().replaceAll('Exception:', '').trim()));
     }
   }
 

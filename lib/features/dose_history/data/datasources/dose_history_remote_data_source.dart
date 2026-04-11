@@ -8,7 +8,7 @@ part 'dose_history_remote_data_source.g.dart';
 abstract class DoseHistoryRemoteDataSource {
   factory DoseHistoryRemoteDataSource(Dio dio, {String baseUrl}) = _DoseHistoryRemoteDataSource;
 
-  @GET("/api/history")
+  @GET("/api/dose-histories")
   Future<List<DoseHistoryModel>> getDoseHistory({
     @Query("MedicineId") String? medicineId,
     @Query("UserId") String? userId,
@@ -16,15 +16,15 @@ abstract class DoseHistoryRemoteDataSource {
     @Query("PageSize") int? pageSize,
   });
 
-  @GET("/api/history/{id}")
+  @GET("/api/dose-histories/{id}")
   Future<DoseHistoryModel> getDoseHistoryById(@Path("id") String id);
 
-  @POST("/api/history")
+  @POST("/api/dose-histories")
   Future<void> createDoseHistory(@Body() DoseHistoryModel history);
 
-  @PUT("/api/history/{id}")
+  @PUT("/api/dose-histories/{id}")
   Future<void> updateDoseHistory(@Path("id") String id, @Body() DoseHistoryModel history);
 
-  @DELETE("/api/history/{id}")
+  @DELETE("/api/dose-histories/{id}")
   Future<void> deleteDoseHistory(@Path("id") String id);
 }

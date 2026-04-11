@@ -11,10 +11,13 @@ import '../../../../features/dose_history/domain/entities/dose_history.dart';
 import '../../../../features/user/presentation/bloc/auth_bloc.dart';
 import '../../../../features/user/presentation/bloc/auth_state.dart';
 import '../../../../features/medicine/presentation/pages/add_medicine_screen.dart';
+import '../../../../features/medicine/presentation/pages/medicine_list_screen.dart';
+import '../../../../features/dose_history/presentation/pages/daily_tracker_screen.dart';
 import '../../../../features/dose_history/presentation/bloc/dose_history_bloc.dart';
 import '../../../../features/dose_history/presentation/bloc/dose_history_event.dart';
 import '../../../../features/medicine/presentation/bloc/medicine_bloc.dart';
 import '../../../../features/medicine/presentation/bloc/medicine_event.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String currentUserId;
@@ -59,6 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.transparent, // Respects global mesh gradient
       body: SafeArea(
@@ -106,19 +110,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Your Medical Routine', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
-                              Text(
-                                'Health Dashboard',
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.textDark,
-                                      letterSpacing: -0.5,
-                                    ),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(l10n.welcomeBack, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
+                                Text(
+                                  l10n.home,
+                                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textDark,
+                                        letterSpacing: -0.5,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
                           GestureDetector(
                             onTap: () {
@@ -194,12 +200,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
                             ),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.calendar_month_rounded, color: AppTheme.primaryGreen, size: 28),
-                                SizedBox(height: 4),
-                                Text('Pick', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                                const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryGreen, size: 28),
+                                const SizedBox(height: 4),
+                                Text(l10n.pickTime, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                               ],
                             ),
                           ),
@@ -217,7 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             date.month == DateTime.now().month &&
                             date.day == DateTime.now().day;
 
-                        final dayName = _getDayName(date.weekday);
+                        final dayName = _getDayName(context, date.weekday);
                         
                         return GestureDetector(
                           onTap: () {
@@ -294,12 +300,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Daily Progress', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+                              Text(l10n.tracker, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
                               const SizedBox(height: 8),
                               Text(
                                 totalDoses == 0 
-                                  ? 'No doses scheduled for this day.' 
-                                  : 'You have completed ${(progress * 100).toInt()}% of your doses today.',
+                                  ? l10n.noDoses 
+                                  : '${l10n.dailyAdherence}: ${(progress * 100).toInt()}%',
                                 style: const TextStyle(fontSize: 14, color: AppTheme.textGrey),
                               ),
                             ],
@@ -333,7 +339,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  Text('Schedule Details', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+                  Text(l10n.tracker, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
                   const SizedBox(height: 16),
 
                   // 6. Glass Schedule List
@@ -347,7 +353,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             Icon(Icons.calendar_today_rounded, size: 60, color: AppTheme.primaryGreen.withOpacity(0.5)),
                             const SizedBox(height: 16),
-                            Text('No routines planned for this day.', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
+                            Text(l10n.noDoses, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
                           ],
                         ),
                       ),
@@ -364,31 +370,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActionsHub() {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildActionItem(
           icon: Icons.medication_rounded,
-          label: 'Add Med',
+          label: l10n.addMedicine,
           color: Colors.blueAccent,
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => AddMedicineScreen(currentUserId: widget.currentUserId)));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => AddMedicineScreen(currentUserId: widget.currentUserId)))
+              .then((_) => _loadData());
           },
         ),
         _buildActionItem(
           icon: Icons.list_alt_rounded,
-          label: 'My Meds',
+          label: l10n.meds,
           color: AppTheme.primaryGreen,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please use the Medicines tab to view or schedule meds!')));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => MedicineListScreen(currentUserId: widget.currentUserId)))
+              .then((_) => _loadData());
           },
         ),
         _buildActionItem(
           icon: Icons.analytics_rounded,
-          label: 'Export Data',
+          label: l10n.analytics,
           color: Colors.purpleAccent,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report generated successfully! (Mock)')));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => DailyTrackerScreen(userId: widget.currentUserId)))
+              .then((_) => _loadData());
           },
         ),
       ],
@@ -417,6 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildLowStockBanner(List<DashboardDoseItem> items) {
+    final l10n = AppLocalizations.of(context)!;
     // Find medicines that are low on stock
     final lowStockMedicines = items
         .map((item) => item.medicine)
@@ -442,10 +453,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Low Stock Alert', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepOrange, fontSize: 16)),
+                   Text(l10n.lowStockAlert, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepOrange, fontSize: 16)),
                   const SizedBox(height: 4),
                   Text(
-                    '${lowStockMedicines.map((m) => m.name).join(', ')} running low.',
+                    '${lowStockMedicines.map((m) => m.name).join(', ')}',
                     style: const TextStyle(fontSize: 13, color: Colors.deepOrange),
                   ),
                 ],
@@ -457,20 +468,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1: return 'Mon';
-      case 2: return 'Tue';
-      case 3: return 'Wed';
-      case 4: return 'Thu';
-      case 5: return 'Fri';
-      case 6: return 'Sat';
-      case 7: return 'Sun';
-      default: return '';
+  String _getDayName(BuildContext context, int weekday) {
+    final languageCode = AppLocalizations.of(context)!.localeName;
+    if (languageCode == 'ar') {
+      switch (weekday) {
+        case 1: return 'الاثنين';
+        case 2: return 'الثلاثاء';
+        case 3: return 'الأربعاء';
+        case 4: return 'الخميس';
+        case 5: return 'الجمعة';
+        case 6: return 'السبت';
+        case 7: return 'الأحد';
+        default: return '';
+      }
+    } else {
+      switch (weekday) {
+        case 1: return 'Mon';
+        case 2: return 'Tue';
+        case 3: return 'Wed';
+        case 4: return 'Thu';
+        case 5: return 'Fri';
+        case 6: return 'Sat';
+        case 7: return 'Sun';
+        default: return '';
+      }
     }
   }
 
   Widget _buildGlassScheduleItem(BuildContext context, DashboardDoseItem item, {bool isUpcoming = false}) {
+    final l10n = AppLocalizations.of(context)!;
     final bool isTaken = item.history.status == DoseStatus.taken;
     final bool isSkipped = item.history.status == DoseStatus.skipped;
     final String timeStr = '${item.history.scheduledTime.hour.toString().padLeft(2, '0')}:${item.history.scheduledTime.minute.toString().padLeft(2, '0')}';
@@ -495,7 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: AppTheme.primaryGreen.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
-              child: const Text('Upcoming ⏳', style: TextStyle(color: AppTheme.primaryGreen, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: -0.2)),
+              child: Text('${l10n.home} ⏳', style: const TextStyle(color: AppTheme.primaryGreen, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: -0.2)),
             ),
             const SizedBox(height: 12),
           ],
@@ -526,10 +552,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: isTaken || isSkipped ? AppTheme.textGrey : AppTheme.textDark,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${item.medicine.dosageAmount} ${item.medicine.dosageUnit ?? ""} • $timeStr',
-                      style: TextStyle(fontSize: 14, color: AppTheme.textGrey),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.monitor_weight_outlined, size: 14, color: AppTheme.textGrey.withOpacity(0.8)),
+                        const SizedBox(width: 4),
+                        Text('${item.medicine.dosageAmount} ${item.medicine.dosageUnit ?? ""}'.trim(), style: TextStyle(fontSize: 13, color: AppTheme.textGrey, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: 12),
+                        Icon(Icons.access_time_rounded, size: 14, color: AppTheme.textGrey.withOpacity(0.8)),
+                        const SizedBox(width: 4),
+                        Text(timeStr, style: TextStyle(fontSize: 13, color: AppTheme.textGrey, fontWeight: FontWeight.w600)),
+                      ],
                     ),
                   ],
                 ),
@@ -552,6 +585,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showDoseConfirmationDialog(DashboardDoseItem item) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -571,9 +605,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 24),
               Icon(Icons.vaccines_rounded, color: AppTheme.primaryGreen.withOpacity(0.5), size: 48),
               const SizedBox(height: 16),
-              Text('Take ${item.medicine.name}?', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+              Text(l10n.didYouTakeDose(item.medicine.name), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5), textAlign: TextAlign.center),
               const SizedBox(height: 8),
-              Text('Dose: ${item.medicine.dosageAmount} ${item.medicine.dosageUnit ?? ""}', style: const TextStyle(fontSize: 16, color: AppTheme.textGrey)),
+              Text('${l10n.dosage}: ${item.medicine.dosageAmount} ${item.medicine.dosageUnit ?? ""}', style: const TextStyle(fontSize: 16, color: AppTheme.textGrey)),
               const SizedBox(height: 32),
               Row(
                 children: [
@@ -585,16 +619,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
                       icon: const Icon(Icons.block_rounded, color: Colors.orange),
-                      label: const Text('Skip', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),
+                      label: Text(l10n.skip, style: const TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),
                       onPressed: () {
+                        context.read<DashboardSummaryBloc>().add(MarkDoseStatus(
+                          historyId: item.history.id, 
+                          status: DoseStatus.skipped, 
+                          actualTime: DateTime.now()
+                        ));
                         context.read<DoseHistoryBloc>().add(UpdateDoseStatus(
                           historyId: item.history.id, 
                           status: DoseStatus.skipped, 
                           actualTime: DateTime.now()
                         ));
                         Navigator.pop(ctx);
-                        _loadData();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Dose skipped.')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded, color: Colors.white),
+                              const SizedBox(width: 12),
+                              Expanded(child: Text(l10n.doseSkippedSuccess, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15))),
+                            ],
+                          ),
+                          backgroundColor: Colors.orange.shade700,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          margin: const EdgeInsets.all(16),
+                        ));
                       },
                     ),
                   ),
@@ -609,9 +659,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
                       icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
-                      label: const Text('Take Dose', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      label: Text(l10n.take, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       onPressed: () {
                         // 1. Mark as taken
+                        context.read<DashboardSummaryBloc>().add(MarkDoseStatus(
+                          historyId: item.history.id, 
+                          status: DoseStatus.taken, 
+                          actualTime: DateTime.now()
+                        ));
                         context.read<DoseHistoryBloc>().add(UpdateDoseStatus(
                           historyId: item.history.id, 
                           status: DoseStatus.taken, 
@@ -628,12 +683,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }
                         
                         Navigator.pop(ctx);
-                        _loadData();
                         
                         // Show beautiful success
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: const Text('Dose logged successfully! 🎉'),
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+                              const SizedBox(width: 12),
+                              Expanded(child: Text(l10n.doseTakenSuccess, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15))),
+                            ],
+                          ),
                           backgroundColor: AppTheme.primaryGreen,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          margin: const EdgeInsets.all(16),
                         ));
                       },
                     ),

@@ -9,6 +9,7 @@ import '../bloc/auth_state.dart';
 import '../../domain/entities/user.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
   const AccountSettingsScreen({Key? key}) : super(key: key);
@@ -25,6 +26,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
   late User _currentUser;
   String? _avatarPath;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -39,9 +41,20 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     if (state is Authenticated) {
       _currentUser = state.user;
       _nameController.text = _currentUser.name;
-      _emailController.text = _currentUser.email.isNotEmpty ? _currentUser.email : 'No email provided';
+      _emailController.text = _currentUser.email;
       _phoneController.text = _currentUser.phone;
       _avatarPath = _currentUser.avatarPath;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      if (_currentUser.email.isEmpty) {
+        _emailController.text = AppLocalizations.of(context)!.noEmailProvided;
+      }
+      _isInitialized = true;
     }
   }
 
@@ -71,8 +84,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       context.read<AuthBloc>().add(UpdateUserProfile(updatedUser));
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account settings saved successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.accountSaved),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
@@ -86,14 +99,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Account', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-        content: const Text(
-            'Are you sure you want to permanently delete your account? This action cannot be undone.',
-            style: TextStyle(color: AppTheme.textGrey)),
+        title: Text(AppLocalizations.of(context)!.deleteAccount, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+        content: Text(
+            AppLocalizations.of(context)!.deleteAccountConfirm,
+            style: const TextStyle(color: AppTheme.textGrey)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.textGrey, fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(color: AppTheme.textGrey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -105,7 +118,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -123,7 +136,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Account Settings', style: TextStyle(color: AppTheme.textDark)),
+        title: Text(AppLocalizations.of(context)!.accountSettings, style: const TextStyle(color: AppTheme.textDark)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -148,7 +161,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                     onAvatarSelected: (path) => setState(() => _avatarPath = path),
                   ),
                   const SizedBox(height: 32),
-                  _buildSectionTitle('Personal Information'),
+                  _buildSectionTitle(AppLocalizations.of(context)!.personalInfo),
                   const SizedBox(height: 12),
                   GlassCard(
                     padding: const EdgeInsets.all(20),
@@ -156,14 +169,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                       children: [
                         _buildTextField(
                           controller: _nameController,
-                          label: 'Full Name',
+                          label: AppLocalizations.of(context)!.name,
                           icon: Icons.person_outline,
-                          validator: (val) => val == null || val.isEmpty ? 'Name cannot be empty' : null,
+                          validator: (val) => val == null || val.isEmpty ? AppLocalizations.of(context)!.nameCannotBeEmpty : null,
                         ),
                         const SizedBox(height: 16),
                         _buildTextField(
                           controller: _phoneController,
-                          label: 'Phone Number',
+                          label: AppLocalizations.of(context)!.phone,
                           icon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                         ),
@@ -171,7 +184,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildSectionTitle('Security'),
+                  _buildSectionTitle(AppLocalizations.of(context)!.preferences),
                   const SizedBox(height: 12),
                   GlassCard(
                     padding: const EdgeInsets.all(20),
@@ -179,17 +192,17 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                       children: [
                         _buildTextField(
                           controller: _emailController,
-                          label: 'Email (Read Only)',
+                          label: AppLocalizations.of(context)!.emailReadOnly,
                           icon: Icons.email_outlined,
                           enabled: false,
                         ),
                         const SizedBox(height: 16),
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Change Password', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w600)),
+                          title: Text(AppLocalizations.of(context)!.changePassword, style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.w600)),
                           trailing: const Icon(Icons.chevron_right, color: AppTheme.textGrey),
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password change not implemented yet.')));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.passwordNotImplemented)));
                           },
                         ),
                       ],
@@ -205,17 +218,17 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 0,
                     ),
-                    child: const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    child: Text(AppLocalizations.of(context)!.saveChanges, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 32),
-                  _buildSectionTitle('Danger Zone'),
+                  _buildSectionTitle(AppLocalizations.of(context)!.dangerZone),
                   const SizedBox(height: 12),
                   GlassCard(
                     padding: EdgeInsets.zero,
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      title: const Text('Delete Account', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Permanently remove your data', style: TextStyle(color: AppTheme.textGrey, fontSize: 12)),
+                      title: Text(AppLocalizations.of(context)!.deleteAccount, style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      subtitle: Text(AppLocalizations.of(context)!.deleteAccountDesc, style: const TextStyle(color: AppTheme.textGrey, fontSize: 12)),
                       trailing: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
                       onTap: _confirmDeleteAccount,
                     ),

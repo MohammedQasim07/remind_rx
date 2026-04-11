@@ -11,6 +11,9 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  
+  bool _isEnabled = true;
+  bool get isEnabled => _isEnabled;
 
   Future<void> init() async {
     tz.initializeTimeZones();
@@ -39,6 +42,13 @@ class NotificationService {
         AndroidFlutterLocalNotificationsPlugin>()?.requestExactAlarmsPermission();
   }
 
+  void setEnabled(bool value) {
+    _isEnabled = value;
+    if (!_isEnabled) {
+      cancelAllAlarms();
+    }
+  }
+
   void _onNotificationTapped(NotificationResponse response) {
     // Handle notification tap (e.g., mark as taken, open specific screen)
     print('Notification tapped: ${response.payload}');
@@ -49,6 +59,8 @@ class NotificationService {
     required Medicine medicine,
     required DateTime localAlarmTime,
   }) async {
+    if (!_isEnabled) return;
+    
     // Basic implementation for EXACT alarms.
     // In production, Android requires exact alarm permissions (SCHEDULE_EXACT_ALARM).
     

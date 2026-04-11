@@ -96,12 +96,12 @@ class MedicineRepositoryImpl implements MedicineRepository {
 
   @override
   Future<void> deleteMedicine(String id) async {
-    try {
-      await remoteDataSource.deleteMedicine(id);
-      await localDataSource.deleteMedicine(id);
-    } catch (e) {
-      await localDataSource.deleteMedicine(id);
-      rethrow;
-    }
+    // Instantly delete local
+    await localDataSource.deleteMedicine(id);
+    
+    // Background sync deletion to remote
+    remoteDataSource.deleteMedicine(id).catchError((e) {
+      print('Network Error deleting medicine sync: $e');
+    });
   }
 }

@@ -6,6 +6,7 @@ abstract class DoseHistoryLocalDataSource {
   Future<List<DoseHistoryModel>> getDoseHistoryForSchedule(String scheduleId);
   Future<List<DoseHistoryModel>> getDoseHistoryForUser(String userId, DateTime from, DateTime to);
   Future<void> saveDoseHistory(DoseHistoryModel history);
+  Future<void> saveManyDoseHistories(List<DoseHistoryModel> histories);
   Future<void> deleteDoseHistoriesForSchedule(String scheduleId);
 }
 
@@ -37,6 +38,13 @@ class DoseHistoryLocalDataSourceImpl implements DoseHistoryLocalDataSource {
   Future<void> saveDoseHistory(DoseHistoryModel history) async {
     await isar.writeTxn(() async {
       await isar.doseHistoryModels.put(history);
+    });
+  }
+
+  @override
+  Future<void> saveManyDoseHistories(List<DoseHistoryModel> histories) async {
+    await isar.writeTxn(() async {
+      await isar.doseHistoryModels.putAll(histories);
     });
   }
 

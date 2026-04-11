@@ -8,6 +8,14 @@ import '../bloc/auth_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import 'account_settings_screen.dart';
+import 'package:remind_rx/core/bloc/language/language_event.dart';
+import 'package:remind_rx/core/bloc/notifications/notifications_bloc.dart';
+import 'package:remind_rx/core/bloc/notifications/notifications_event.dart';
+import 'package:remind_rx/core/bloc/notifications/notifications_state.dart';
+import 'package:remind_rx/features/medicine/presentation/bloc/medicine_bloc.dart';
+import 'package:remind_rx/features/medicine/presentation/bloc/medicine_event.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
+import 'package:remind_rx/core/bloc/language/language_bloc.dart';
 
 class SettingsScreen extends StatelessWidget {
   final String currentUserId;
@@ -16,13 +24,14 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.transparent, // Background handled by parent layout
       body: SafeArea(
         child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
-          String userName = 'Patient Profile';
-          String userEmail = 'Premium Health Profile';
+          String userName = l10n.name;
+          String userEmail = l10n.appTitle;
           String? avatarPath;
           
           if (state is Authenticated) {
@@ -36,11 +45,11 @@ class SettingsScreen extends StatelessWidget {
             children: [
               _buildProfileCard(context, userName, userEmail, avatarPath),
               const SizedBox(height: 24),
-              _buildSectionTitle('Preferences'),
+              _buildSectionTitle(l10n.preferences),
               const SizedBox(height: 12),
               _buildPreferencesSection(context),
               const SizedBox(height: 24),
-              _buildSectionTitle('Account'),
+              _buildSectionTitle(l10n.account),
               const SizedBox(height: 12),
               _buildAccountSection(context),
             ],
@@ -51,8 +60,10 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildProfileCard(BuildContext context, String name, String email, String? avatarPath) {
+    final l10n = AppLocalizations.of(context)!;
     Widget avatarChild = const Icon(Icons.person, color: AppTheme.primaryGreen, size: 40);
     
+    // ... same avatar logic ...
     if (avatarPath != null) {
       if (avatarPath.startsWith('http')) {
         avatarChild = ClipOval(child: Image.network(avatarPath, fit: BoxFit.cover, width: 80, height: 80));
@@ -83,8 +94,8 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Text('App Preferences', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
-            Text('Account Settings', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+            Text(l10n.appPreferences, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
+            Text(l10n.accountSettings, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
             const SizedBox(height: 32),
             Container(
               width: double.infinity,
@@ -120,7 +131,7 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 4),
+      padding: const EdgeInsets.only(left: 8, bottom: 4, right: 8),
       child: Text(
         title,
         style: const TextStyle(
@@ -134,48 +145,88 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildPreferencesSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GlassCard(
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          _buildSettingsTile(
-            icon: Icons.notifications_active_outlined,
-            title: 'Notifications',
-            subtitle: 'Alarms and reminders',
-            trailing: Switch(
-              value: true,
-              onChanged: (val) {
-                // Future: Toggle global notifications
-              },
-              activeColor: AppTheme.primaryGreen,
-            ),
+          BlocBuilder<NotificationsBloc, NotificationsState>(
+            builder: (context, state) {
+              return _buildSettingsTile(
+                icon: Icons.notifications_active_outlined,
+                title: l10n.notifications,
+                subtitle: l10n.alarmsReminders,
+                trailing: Switch(
+                  value: state.isEnabled,
+                  onChanged: (val) {
+                    context.read<NotificationsBloc>().add(ToggleNotifications(val));
+                    if (val) {
+                      final authState = context.read<AuthBloc>().state;
+                      if (authState is Authenticated) {
+                        context.read<MedicineBloc>().add(RescheduleAllAlarms(authState.user.id));
+                      }
+                    }
+                  },
+                  activeColor: AppTheme.primaryGreen,
+                ),
+              );
+            },
           ),
           _buildDivider(),
           _buildSettingsTile(
             icon: Icons.language_outlined,
-            title: 'Language',
-            subtitle: 'English (US)',
+            title: l10n.language,
+            subtitle: Localizations.localeOf(context).languageCode == 'ar' ? 'العربية' : 'English',
             trailing: const Icon(Icons.chevron_right, color: AppTheme.textGrey),
-            onTap: () {
-               ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('Language is locked to English'), backgroundColor: AppTheme.textGrey),
-               );
-            },
+            onTap: () => _showLanguagePicker(context),
           ),
         ],
       ),
     );
   }
 
+  void _showLanguagePicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.selectLanguage),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(l10n.english),
+              leading: const Icon(Icons.language, color: AppTheme.primaryGreen),
+              onTap: () {
+                context.read<LanguageBloc>().add(const ChangeLanguage(Locale('en')));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: Text(l10n.arabic),
+              leading: const Icon(Icons.language, color: AppTheme.primaryGreen),
+              onTap: () {
+                context.read<LanguageBloc>().add(const ChangeLanguage(Locale('ar')));
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAccountSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GlassCard(
       padding: EdgeInsets.zero,
       child: Column(
         children: [
           _buildSettingsTile(
             icon: Icons.info_outline_rounded,
-            title: 'About',
-            subtitle: 'Made By BitXero',
+            title: l10n.about,
+            subtitle: l10n.madeBy,
             trailing: const Icon(Icons.chevron_right, color: AppTheme.textGrey),
             onTap: () {
               showDialog(
@@ -195,13 +246,13 @@ class SettingsScreen extends StatelessWidget {
                           child: const Icon(Icons.health_and_safety_rounded, color: AppTheme.primaryGreen, size: 48),
                         ),
                         const SizedBox(height: 16),
-                        const Text('RemindRx Premium', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                        Text(l10n.remindRxPremium, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
                         const SizedBox(height: 4),
-                        const Text('v1.0.0 (Build 42)', style: TextStyle(color: AppTheme.textGrey)),
+                        Text(l10n.appVersion, style: const TextStyle(color: AppTheme.textGrey)),
                         const SizedBox(height: 24),
-                        const Text(
-                          'RemindRx is your ultimate intelligent health companion. Expertly crafted to simplify medication tracking, manage smart inventory, and ensure you never miss a dose.', 
-                          style: TextStyle(fontSize: 14, height: 1.5, color: AppTheme.textGrey),
+                        Text(
+                          l10n.appDescription, 
+                          style: const TextStyle(fontSize: 14, height: 1.5, color: AppTheme.textGrey),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
@@ -211,30 +262,30 @@ class SettingsScreen extends StatelessWidget {
                           decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade200)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('Development Team', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-                              SizedBox(height: 4),
-                              Text('Mohammed Qasim\nAli Khalil\nAbdulqader Taha', style: TextStyle(color: AppTheme.textGrey, fontSize: 13, height: 1.4)),
-                              SizedBox(height: 16),
-                              Text('Contact Us', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-                              SizedBox(height: 4),
-                              Text('info@bitxero-iq.com', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
-                              SizedBox(height: 16),
-                              Text('Website', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-                              SizedBox(height: 4),
-                              Text('https://bitxero-iq.com', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
+                            children: [
+                              Text(l10n.developmentTeam, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                              const SizedBox(height: 4),
+                              Text(l10n.devTeamNames, style: const TextStyle(color: AppTheme.textGrey, fontSize: 13, height: 1.4)),
+                              const SizedBox(height: 16),
+                              Text(l10n.contactUs, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                              const SizedBox(height: 4),
+                              const Text('info@bitxero-iq.com', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
+                              const SizedBox(height: 16),
+                              Text(l10n.website, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                              const SizedBox(height: 4),
+                              const Text('https://bitxero-iq.com', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w600, fontSize: 13)),
                             ]
                           )
                         ),
                         const SizedBox(height: 24),
-                        const Text('© 2026 BitXero. All Rights Reserved.', style: TextStyle(color: AppTheme.textGrey, fontSize: 12)),
+                        Text(l10n.allRightsReserved, style: const TextStyle(color: AppTheme.textGrey, fontSize: 12)),
                       ]
                     )
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Close', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+                      child: Text(l10n.close, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
                     )
                   ]
                 )
@@ -244,7 +295,7 @@ class SettingsScreen extends StatelessWidget {
           _buildDivider(),
           _buildSettingsTile(
             icon: Icons.logout_rounded,
-            title: 'Log Out',
+            title: l10n.logOut,
             iconColor: Colors.redAccent,
             titleColor: Colors.redAccent,
             onTap: () => _confirmLogout(context),
@@ -285,17 +336,18 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _confirmLogout(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Log Out', style: TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to log out of your account?', style: TextStyle(color: AppTheme.textGrey)),
+        title: Text(l10n.logOut, style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
+        content: Text(l10n.logoutConfirm, style: const TextStyle(color: AppTheme.textGrey)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.textGrey, fontWeight: FontWeight.bold)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppTheme.textGrey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -308,7 +360,7 @@ class SettingsScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               minimumSize: const Size(100, 40),
             ),
-            child: const Text('Log Out'),
+            child: Text(l10n.logOut),
           ),
         ],
       ),

@@ -6,6 +6,10 @@ import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/avatar_selector.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
+import '../../../../core/bloc/language/language_bloc.dart';
+import '../../../../core/bloc/language/language_event.dart';
+import '../../../../core/bloc/language/language_state.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -101,16 +105,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Widget _buildLanguageToggle() {
+    return BlocBuilder<LanguageBloc, LanguageState>(
+      builder: (context, state) {
+        final isArabic = state.locale.languageCode == 'ar';
+        return GestureDetector(
+          onTap: () {
+            final newLocale = isArabic ? const Locale('en') : const Locale('ar');
+            context.read<LanguageBloc>().add(ChangeLanguage(newLocale));
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.primaryGreen.withOpacity(0.2)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.translate_rounded, size: 14, color: AppTheme.primaryGreen),
+                const SizedBox(width: 6),
+                Text(
+                  isArabic ? 'English' : 'العربية',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildStep1() {
+    final l10n = AppLocalizations.of(context)!;
     return Form(
       key: _step1FormKey,
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           children: [
-            const Text('Who are you?', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+            Text(l10n.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
             const SizedBox(height: 8),
-            const Text('Upload a photo or pick an avatar for your medical profile.', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textGrey)),
+            Text(l10n.createAccount, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textGrey)),
             const SizedBox(height: 32),
             
             AvatarSelector(
@@ -122,17 +160,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             TextFormField(
               controller: _nameController,
-              decoration: _buildInputDecoration(label: 'Full Name', icon: Icons.person_outline),
-              validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your real name' : null,
+              decoration: _buildInputDecoration(label: l10n.name, icon: Icons.person_outline),
+              validator: (value) => value == null || value.trim().isEmpty ? l10n.nameRequired : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _emailController,
-              decoration: _buildInputDecoration(label: 'Email Address', icon: Icons.email_outlined),
+              decoration: _buildInputDecoration(label: l10n.email, icon: Icons.email_outlined),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Please enter your email';
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) return 'Enter a valid email address';
+                if (value == null || value.trim().isEmpty) return l10n.enterEmail;
+                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) return l10n.enterValidEmail;
                 return null;
               },
             ),
@@ -144,9 +182,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   flex: 3,
                   child: TextFormField(
                     controller: _countryCodeController,
-                    decoration: _buildInputDecoration(label: 'Code', icon: Icons.public).copyWith(prefixIcon: null),
+                    decoration: _buildInputDecoration(label: l10n.phoneCountryCode, icon: Icons.public).copyWith(prefixIcon: null, labelStyle: const TextStyle(fontSize: 10)),
                     keyboardType: TextInputType.phone,
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Req' : null,
+                    validator: (value) => value == null || value.trim().isEmpty ? l10n.countryCode : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -154,9 +192,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   flex: 7,
                   child: TextFormField(
                     controller: _phoneController,
-                    decoration: _buildInputDecoration(label: 'Phone Number', icon: Icons.phone_outlined),
+                    decoration: _buildInputDecoration(label: l10n.phone, icon: Icons.phone_outlined),
                     keyboardType: TextInputType.phone,
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your phone number' : null,
+                    validator: (value) => value == null || value.trim().isEmpty ? l10n.phoneRequired : null,
                   ),
                 ),
               ],
@@ -168,6 +206,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildStep2() {
+    final l10n = AppLocalizations.of(context)!;
     bool passwordMatches = _passwordController.text.isNotEmpty && _passwordController.text == _confirmPasswordController.text;
     bool passwordLongEnough = _passwordController.text.length >= 6;
 
@@ -177,9 +216,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           children: [
-            const Text('Secure your account', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+            Text(l10n.appTitle, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
             const SizedBox(height: 8),
-            const Text('Protect your health data with a strong password.', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.textGrey)),
+            Text(l10n.createAccount, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textGrey)),
             const SizedBox(height: 48),
 
             TextFormField(
@@ -187,14 +226,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: !_isPasswordVisible,
               onChanged: (val) => setState((){}),
               decoration: _buildInputDecoration(
-                label: 'Password', 
+                label: l10n.password, 
                 icon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
                   onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                 ),
               ),
-              validator: (value) => value == null || value.length < 6 ? 'Must be at least 6 characters' : null,
+              validator: (value) => value == null || value.length < 6 ? l10n.passwordLength : null,
             ),
             const SizedBox(height: 8),
             Align(
@@ -203,7 +242,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                    Icon(passwordLongEnough ? Icons.check_circle : Icons.radio_button_unchecked, color: passwordLongEnough ? AppTheme.primaryGreen : Colors.grey, size: 16),
                    const SizedBox(width: 8),
-                   Text('At least 6 characters', style: TextStyle(color: passwordLongEnough ? AppTheme.primaryGreen : Colors.grey, fontSize: 13)),
+                   Text(l10n.passwordLength, style: TextStyle(color: passwordLongEnough ? AppTheme.primaryGreen : Colors.grey, fontSize: 13)),
                 ],
               ),
             ),
@@ -213,7 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: !_isConfirmPasswordVisible,
               onChanged: (val) => setState((){}),
               decoration: _buildInputDecoration(
-                label: 'Confirm Password', 
+                label: l10n.password, 
                 icon: Icons.lock_reset,
                 suffixIcon: IconButton(
                   icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
@@ -221,8 +260,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) return 'Please confirm your password';
-                if (value != _passwordController.text) return 'Passwords do not match';
+                if (value == null || value.isEmpty) return l10n.password;
+                if (value != _passwordController.text) return l10n.password;
                 return null;
               },
             ),
@@ -233,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                    Icon(passwordMatches ? Icons.check_circle : Icons.radio_button_unchecked, color: passwordMatches ? AppTheme.primaryGreen : Colors.grey, size: 16),
                    const SizedBox(width: 8),
-                   Text('Passwords match', style: TextStyle(color: passwordMatches ? AppTheme.primaryGreen : Colors.grey, fontSize: 13)),
+                   Text(l10n.passwordMatch, style: TextStyle(color: passwordMatches ? AppTheme.primaryGreen : Colors.grey, fontSize: 13)),
                 ],
               ),
             ),
@@ -245,6 +284,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocListener<AuthBloc, AuthState>(
@@ -299,7 +339,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ]
                       ),
-                      const SizedBox(width: 48), // Balance for arrow back
+                      _buildLanguageToggle(),
                     ],
                   ),
                 ],
@@ -338,7 +378,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                            side: const BorderSide(color: AppTheme.primaryGreen),
                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                          ),
-                         child: const Text('Back', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+                         child: Text(l10n.cancel, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
                        ),
                      ),
                   if (_currentStep == 1) const SizedBox(width: 16),
@@ -354,7 +394,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: Text(_currentStep == 0 ? 'Continue' : 'Create Account', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text(_currentStep == 0 ? l10n.next : l10n.signUp, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

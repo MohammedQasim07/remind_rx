@@ -1,13 +1,16 @@
 import 'package:isar/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/user.dart';
+import '../../../../core/utils/hash_helper.dart';
 
 part 'user_model.g.dart';
 
 @collection
 @JsonSerializable()
 class UserModel {
-  Id isarId = Isar.autoIncrement;
+  @JsonKey(ignore: true)
+  Id get isarId => HashHelper.fastHash(id);
+  set isarId(Id value) {}
 
   @Index(unique: true)
   late String id;
@@ -28,6 +31,7 @@ class UserModel {
   String? city;
   String? country;
   String? occupation;
+  String? avatarPath;
 
   UserModel();
 
@@ -47,7 +51,8 @@ class UserModel {
       ..nationality = user.nationality
       ..city = user.city
       ..country = user.country
-      ..occupation = user.occupation;
+      ..occupation = user.occupation
+      ..avatarPath = user.avatarPath;
   }
 
   User toEntity() {
@@ -64,6 +69,7 @@ class UserModel {
       city: city,
       country: country,
       occupation: occupation,
+      avatarPath: avatarPath,
     );
   }
 }
@@ -82,5 +88,6 @@ class _UserImpl extends User {
     super.city,
     super.country,
     super.occupation,
+    super.avatarPath,
   });
 }

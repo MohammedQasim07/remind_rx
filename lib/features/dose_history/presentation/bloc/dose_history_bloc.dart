@@ -16,7 +16,7 @@ class DoseHistoryBloc extends Bloc<DoseHistoryEvent, DoseHistoryState> {
     LoadDailyDoseHistory event,
     Emitter<DoseHistoryState> emit,
   ) async {
-    emit(DoseHistoryLoading());
+    if (state is! DoseHistoryLoaded) emit(DoseHistoryLoading());
     try {
       final startOfDay = DateTime(event.date.year, event.date.month, event.date.day);
       final endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
@@ -32,7 +32,7 @@ class DoseHistoryBloc extends Bloc<DoseHistoryEvent, DoseHistoryState> {
     LoadWeeklyDoseHistory event,
     Emitter<DoseHistoryState> emit,
   ) async {
-    emit(DoseHistoryLoading());
+    if (state is! DoseHistoryLoaded) emit(DoseHistoryLoading());
     try {
       final now = DateTime.now();
       final endOfDay = DateTime(now.year, now.month, now.day).add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
@@ -50,13 +50,20 @@ class DoseHistoryBloc extends Bloc<DoseHistoryEvent, DoseHistoryState> {
     Emitter<DoseHistoryState> emit,
   ) async {
     try {
+      if (state is DoseHistoryLoaded) {
+          final current = (state as DoseHistoryLoaded).dailyHistory;
+          final updated = current.map((h) {
+             if (h.id == event.historyId) return h.copyWith(status: event.status, actualTime: event.actualTime);
+             return h;
+          }).toList();
+          emit(DoseHistoryLoaded(updated));
+      }
+      
       await doseHistoryRepository.updateDoseHistoryStatus(
         event.historyId,
         event.status,
         event.actualTime,
       );
-      
-      // Simplify: reload is usually handled by the UI or by re-adding LoadDailyDoseHistory
     } catch (e) {
       emit(DoseHistoryError(e.toString()));
     }

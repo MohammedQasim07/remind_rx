@@ -23,13 +23,13 @@ import 'features/schedule/data/datasources/schedule_local_data_source.dart';
 import 'features/schedule/data/datasources/schedule_remote_data_source.dart';
 import 'features/schedule/data/repositories/schedule_repository_impl.dart';
 import 'features/schedule/domain/repositories/schedule_repository.dart';
-
 import 'features/dose_history/data/datasources/dose_history_local_data_source.dart';
 import 'features/dose_history/data/datasources/dose_history_remote_data_source.dart';
 import 'features/dose_history/data/repositories/dose_history_repository_impl.dart';
 import 'features/dose_history/domain/repositories/dose_history_repository.dart';
 import 'features/dose_history/data/usecases/generate_dose_history_usecase_impl.dart';
 import 'features/user/data/datasources/user_remote_data_source.dart';
+import 'features/user/data/datasources/user_local_data_source.dart';
 import 'features/user/data/repositories/auth_repository_impl.dart';
 import 'features/user/domain/repositories/auth_repository.dart';
 import 'features/medicine/presentation/bloc/medicine_bloc.dart';
@@ -45,12 +45,16 @@ import 'features/dose_history/presentation/bloc/dose_history_bloc.dart';
 import 'features/home/presentation/bloc/dashboard_summary_bloc.dart';
 import 'core/theme/app_theme.dart';
 
+import 'package:remind_rx/core/bloc/language/language_bloc.dart';
+import 'package:remind_rx/core/bloc/language/language_event.dart';
+import 'package:remind_rx/core/bloc/language/language_state.dart';
+import 'package:remind_rx/core/bloc/notifications/notifications_bloc.dart';
+import 'package:remind_rx/core/bloc/notifications/notifications_event.dart';
+import 'package:remind_rx/core/bloc/notifications/notifications_state.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   // 1. Initialize Timezones
   TimezoneHelper.init();
-
   // 2. Initialize Notifications
   final notificationService = NotificationService();
   await notificationService.init();
@@ -69,13 +73,21 @@ void main() async {
   
   const secureStorage = FlutterSecureStorage();
   
+  // Get Initial Locale & Notification State
+  final initialLocale = await LanguageBloc.getInitialLocale();
+  final isNotificationsEnabled = await NotificationsBloc.getInitialNotificationState();
+  notificationService.setEnabled(isNotificationsEnabled);
+
   // Repositories & DataSources
   final userRemoteDataSource = UserRemoteDataSource(dio);
+  final userLocalDataSource = UserLocalDataSourceImpl(isar);
   final authRepository = AuthRepositoryImpl(
     remoteDataSource: userRemoteDataSource,
+    localDataSource: userLocalDataSource,
     secureStorage: secureStorage,
   );
 
+  // ... rest of reposition setup remains the same ...
   final medicineRemoteDataSource = MedicineRemoteDataSource(dio);
   final medicineLocalDataSource = MedicineLocalDataSourceImpl(isar);
   final medicineRepository = MedicineRepositoryImpl(
@@ -106,6 +118,8 @@ void main() async {
     doseHistoryRepository: doseHistoryRepository,
     generateDoseHistoryUseCase: generateDoseHistoryUseCase,
     notificationService: notificationService,
+    initialLocale: initialLocale,
+    isNotificationsEnabled: isNotificationsEnabled,
   ));
 }
 
@@ -116,6 +130,8 @@ class RemindRxApp extends StatelessWidget {
   final DoseHistoryRepository doseHistoryRepository;
   final GenerateDoseHistoryUseCaseImpl generateDoseHistoryUseCase;
   final NotificationService notificationService;
+  final Locale initialLocale;
+  final bool isNotificationsEnabled;
 
   const RemindRxApp({
     Key? key,
@@ -125,6 +141,8 @@ class RemindRxApp extends StatelessWidget {
     required this.doseHistoryRepository,
     required this.generateDoseHistoryUseCase,
     required this.notificationService,
+    required this.initialLocale,
+    required this.isNotificationsEnabled,
   }) : super(key: key);
 
   @override
@@ -132,13 +150,22 @@ class RemindRxApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
+          create: (_) => LanguageBloc()..add(ChangeLanguage(initialLocale)),
+        ),
+        BlocProvider(
+          create: (_) => NotificationsBloc(notificationService)..add(LoadNotificationSettings()),
+        ),
+        BlocProvider(
           create: (_) => AuthBloc(authRepository: authRepository)..add(AuthCheckRequested()),
         ),
+        // ... (rest of bloc providers)
         BlocProvider(
           create: (_) => MedicineBloc(
             repository: medicineRepository,
             scheduleRepository: scheduleRepository,
             notificationService: notificationService,
+            doseHistoryRepository: doseHistoryRepository,
+            generateDoseHistoryUseCase: generateDoseHistoryUseCase,
           ),
         ),
         BlocProvider(
@@ -159,32 +186,36 @@ class RemindRxApp extends StatelessWidget {
           ),
         ),
       ],
-      child: MaterialApp(
-        title: 'RemindRx',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, state) {
-            if (state is Authenticated) {
-               // Load medicines for the authenticated user
-               context.read<MedicineBloc>().add(LoadMedicines(state.user.id));
-               return MainLayoutScreen(currentUserId: state.user.id);
-            } else if (state is Unauthenticated || state is AuthError) {
-              return const LoginScreen();
-            }
-            // Splash / Loading
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          },
-        ),
-        routes: {
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
-          '/dashboard': (context) => const DashboardRouter(),
+      child: BlocBuilder<LanguageBloc, LanguageState>(
+        builder: (context, languageState) {
+          return MaterialApp(
+            title: 'RemindRx',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            locale: languageState.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                if (state is Authenticated) {
+                   // Load medicines for the authenticated user
+                   context.read<MedicineBloc>().add(LoadMedicines(state.user.id));
+                   return MainLayoutScreen(currentUserId: state.user.id);
+                } else if (state is Unauthenticated || state is AuthError) {
+                  return const LoginScreen();
+                }
+                // Splash / Loading
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              },
+            ),
+            routes: {
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/dashboard': (context) => const DashboardRouter(),
+            },
+          );
         },
       ),
     );

@@ -28,4 +28,26 @@ class DoseHistory {
     required this.status,
     this.notes,
   });
+
+  DoseHistory copyWith({
+    String? id,
+    String? scheduleId,
+    String? medicineId,
+    String? userId,
+    DateTime? scheduledTime,
+    DateTime? actualTime,
+    DoseStatus? status,
+    String? notes,
+  }) {
+    return DoseHistory(
+      id: id ?? this.id,
+      scheduleId: scheduleId ?? this.scheduleId,
+      medicineId: medicineId ?? this.medicineId,
+      userId: userId ?? this.userId,
+      scheduledTime: scheduledTime ?? this.scheduledTime,
+      actualTime: actualTime ?? this.actualTime,
+      status: status ?? this.status,
+      notes: notes ?? this.notes,
+    );
+  }
 }

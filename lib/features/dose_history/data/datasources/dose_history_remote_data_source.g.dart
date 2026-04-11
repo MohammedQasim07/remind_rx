@@ -43,7 +43,7 @@ class _DoseHistoryRemoteDataSource implements DoseHistoryRemoteDataSource {
     )
             .compose(
               _dio.options,
-              '/api/history',
+              '/api/dose-histories',
               queryParameters: queryParameters,
               data: _data,
             )
@@ -73,7 +73,7 @@ class _DoseHistoryRemoteDataSource implements DoseHistoryRemoteDataSource {
     )
             .compose(
               _dio.options,
-              '/api/history/${id}',
+              '/api/dose-histories/${id}',
               queryParameters: queryParameters,
               data: _data,
             )
@@ -100,7 +100,7 @@ class _DoseHistoryRemoteDataSource implements DoseHistoryRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/history',
+          '/api/dose-histories',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -128,7 +128,7 @@ class _DoseHistoryRemoteDataSource implements DoseHistoryRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/history/${id}',
+          '/api/dose-histories/${id}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -152,7 +152,7 @@ class _DoseHistoryRemoteDataSource implements DoseHistoryRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/history/${id}',
+          '/api/dose-histories/${id}',
           queryParameters: queryParameters,
           data: _data,
         )

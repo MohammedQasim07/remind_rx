@@ -5,11 +5,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
+import '../../../../core/widgets/premium_time_picker.dart';
 import '../../domain/entities/medicine.dart';
 import '../bloc/medicine_bloc.dart';
 import '../bloc/medicine_event.dart';
 import '../bloc/medicine_state.dart';
 import '../../../schedule/domain/entities/schedule.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
 
 // ─── Type Interface ─────────────────────────────────────────────
 class _MedicineTypeOption {
@@ -26,16 +28,19 @@ class _MedicineTypeOption {
   });
 }
 
-const _typeOptions = [
-  _MedicineTypeOption(type: MedicineType.pill, icon: Icons.medication_rounded, color: Colors.blueAccent, label: 'Pill'),
-  _MedicineTypeOption(type: MedicineType.capsule, icon: Icons.medication_liquid_rounded, color: Colors.indigo, label: 'Capsule'),
-  _MedicineTypeOption(type: MedicineType.liquid, icon: Icons.water_drop_rounded, color: Colors.teal, label: 'Liquid / Syrup'),
-  _MedicineTypeOption(type: MedicineType.injection, icon: Icons.vaccines_rounded, color: Colors.purpleAccent, label: 'Injection'),
-  _MedicineTypeOption(type: MedicineType.inhaler, icon: Icons.air_rounded, color: Colors.orangeAccent, label: 'Inhaler'),
-  _MedicineTypeOption(type: MedicineType.drops, icon: Icons.opacity_rounded, color: Colors.lightBlue, label: 'Drops'),
-  _MedicineTypeOption(type: MedicineType.cream, icon: Icons.healing_rounded, color: Colors.pinkAccent, label: 'Cream'),
-  _MedicineTypeOption(type: MedicineType.other, icon: Icons.medical_services_rounded, color: AppTheme.primaryGreen, label: 'Other'),
-];
+List<_MedicineTypeOption> _getTypeOptions(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  return [
+    _MedicineTypeOption(type: MedicineType.pill, icon: Icons.medication_rounded, color: Colors.blueAccent, label: l10n.pill),
+    _MedicineTypeOption(type: MedicineType.capsule, icon: Icons.medication_liquid_rounded, color: Colors.indigo, label: l10n.capsule),
+    _MedicineTypeOption(type: MedicineType.liquid, icon: Icons.water_drop_rounded, color: Colors.teal, label: l10n.liquid),
+    _MedicineTypeOption(type: MedicineType.injection, icon: Icons.vaccines_rounded, color: Colors.purpleAccent, label: l10n.injection),
+    _MedicineTypeOption(type: MedicineType.inhaler, icon: Icons.air_rounded, color: Colors.orangeAccent, label: l10n.inhaler),
+    _MedicineTypeOption(type: MedicineType.drops, icon: Icons.opacity_rounded, color: Colors.lightBlue, label: l10n.drops),
+    _MedicineTypeOption(type: MedicineType.cream, icon: Icons.healing_rounded, color: Colors.pinkAccent, label: l10n.cream),
+    _MedicineTypeOption(type: MedicineType.other, icon: Icons.medical_services_rounded, color: AppTheme.primaryGreen, label: l10n.other),
+  ];
+}
 
 // ─── Dynamic Vocabulary Logic ───────────────────────────────────
 class _MedicineVocabulary {
@@ -52,51 +57,59 @@ class _MedicineVocabulary {
   });
 }
 
-_MedicineVocabulary _getVocabularyForType(MedicineType type) {
+_MedicineVocabulary _getVocabularyForType(BuildContext context, MedicineType type) {
+  final l10n = AppLocalizations.of(context)!;
   switch (type) {
     case MedicineType.cream:
-      return const _MedicineVocabulary(
-        amountLabel: 'Amount (e.g. 1 fingertip)',
-        stockLabel: 'Gram/tube capacity left',
-        frequencyLabel: 'How many times to apply?',
-        unitSuggestions: ['application(s)', 'g', 'mg', '%'],
+      return _MedicineVocabulary(
+        amountLabel: l10n.amountCream,
+        stockLabel: l10n.stockCream,
+        frequencyLabel: l10n.freqCream,
+        unitSuggestions: ['g', 'mg', '%'],
       );
     case MedicineType.drops:
-      return const _MedicineVocabulary(
-        amountLabel: 'How many drops?',
-        stockLabel: 'Drops left in bottle (est)',
-        frequencyLabel: 'How many times a day?',
-        unitSuggestions: ['drop(s)', 'ml'],
+      return _MedicineVocabulary(
+        amountLabel: l10n.amountDrops,
+        stockLabel: l10n.stockDrops,
+        frequencyLabel: l10n.freqDrops,
+        unitSuggestions: ['ml'],
       );
     case MedicineType.injection:
-      return const _MedicineVocabulary(
-        amountLabel: 'Injection Volume',
-        stockLabel: 'Remaining injections/vials',
-        frequencyLabel: 'How many injections a day?',
+      return _MedicineVocabulary(
+        amountLabel: l10n.amountInjection,
+        stockLabel: l10n.stockInjection,
+        frequencyLabel: l10n.freqInjection,
         unitSuggestions: ['ml', 'IU', 'mg'],
       );
     case MedicineType.liquid:
-      return const _MedicineVocabulary(
-        amountLabel: 'Dose volume (e.g. 10)',
-        stockLabel: 'Total liquid left (ml)',
-        frequencyLabel: 'How many times a day?',
-        unitSuggestions: ['ml', 'spoon(s)'],
+      return _MedicineVocabulary(
+        amountLabel: l10n.amountLiquid,
+        stockLabel: l10n.stockLiquid,
+        frequencyLabel: l10n.freqLiquid,
+        unitSuggestions: ['ml'],
       );
     case MedicineType.inhaler:
-      return const _MedicineVocabulary(
-        amountLabel: 'How many puffs?',
-        stockLabel: 'Puffs remaining in inhaler',
-        frequencyLabel: 'How many times a day?',
-        unitSuggestions: ['puff(s)', 'mcg'],
+      return _MedicineVocabulary(
+        amountLabel: l10n.amountInhaler,
+        stockLabel: l10n.stockInhaler,
+        frequencyLabel: l10n.freqInhaler,
+        unitSuggestions: ['mcg'],
       );
     case MedicineType.pill:
     case MedicineType.capsule:
+      return _MedicineVocabulary(
+        amountLabel: l10n.amountPill,
+        stockLabel: l10n.stockPill,
+        frequencyLabel: l10n.freqPill,
+        unitSuggestions: ['mg', 'g'],
+      );
+    case MedicineType.other:
     default:
-      return const _MedicineVocabulary(
-        amountLabel: 'Dose (e.g. 1 pill or 500mg)',
-        stockLabel: 'Pills/Capsules left in box',
-        frequencyLabel: 'How many times a day?',
-        unitSuggestions: ['pill(s)', 'mg', 'g'],
+      return _MedicineVocabulary(
+        amountLabel: l10n.genericAmountLabel,
+        stockLabel: l10n.genericStockLabel,
+        frequencyLabel: l10n.genericFreqLabel,
+        unitSuggestions: ['mg', 'ml', 'unit'],
       );
   }
 }
@@ -122,11 +135,11 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
   final _notesCtrl = TextEditingController();
   final _stockCtrl = TextEditingController();
   final _lowAlertCtrl = TextEditingController();
+  final _customTypeCtrl = TextEditingController();
 
   int _timesPerDay = 1;
   List<TimeOfDay> _reminderTimes = [const TimeOfDay(hour: 8, minute: 0)];
 
-  @override
   void initState() {
     super.initState();
     _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
@@ -143,6 +156,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
     _notesCtrl.dispose();
     _stockCtrl.dispose();
     _lowAlertCtrl.dispose();
+    _customTypeCtrl.dispose();
     super.dispose();
   }
 
@@ -181,21 +195,9 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
   }
 
   Future<void> _pickTimeForIndex(int index) async {
-    final picked = await showTimePicker(
-      context: context,
+    final TimeOfDay? picked = await PremiumTimePicker.show(
+      context,
       initialTime: _reminderTimes[index],
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryGreen,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.textDark,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
@@ -212,7 +214,9 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
       id: medId,
       userId: widget.currentUserId,
       name: _nameCtrl.text.trim(),
-      description: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      description: _selectedType == MedicineType.other && _customTypeCtrl.text.isNotEmpty 
+          ? _customTypeCtrl.text.trim() 
+          : (_notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim()),
       dosageAmount: double.tryParse(_amountCtrl.text) ?? 1.0,
       dosageUnit: _unitCtrl.text.trim(),
       type: _selectedType,
@@ -246,7 +250,8 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
 
   // ─── UI ─────────────────────────────────────────────────────────
   Widget _buildProgress() {
-    final labels = ['Type', 'Details', 'Schedule'];
+    final l10n = AppLocalizations.of(context)!;
+    final labels = [l10n.details, l10n.dosage, l10n.remindersLabel];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
@@ -299,10 +304,11 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
   }
 
   Widget _buildStep0() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('Medicine Type', 'What kind of medication is this?'),
+        _buildHeading(l10n.medicines, l10n.pleaseLogin),
         const SizedBox(height: 32),
         GridView.builder(
           shrinkWrap: true,
@@ -313,9 +319,10 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
             crossAxisSpacing: 16,
             childAspectRatio: 0.85,
           ),
-          itemCount: _typeOptions.length,
+          itemCount: _getTypeOptions(context).length,
           itemBuilder: (ctx, i) {
-            final opt = _typeOptions[i];
+            final typeOptions = _getTypeOptions(context);
+            final opt = typeOptions[i];
             final selected = _selectedType == opt.type;
             
             return GestureDetector(
@@ -323,7 +330,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
                 setState(() {
                   _selectedType = opt.type;
                   // Dynamic Unit default:
-                  _unitCtrl.text = _getVocabularyForType(opt.type).unitSuggestions.first;
+                  _unitCtrl.text = _getVocabularyForType(context, opt.type).unitSuggestions.first;
                 });
               },
               child: AnimatedContainer(
@@ -361,25 +368,35 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
           },
         ),
         const SizedBox(height: 48),
-        _buildStepButton(label: 'Continue to Details', icon: Icons.arrow_forward_rounded, onPressed: _nextStep, isPrimary: true),
+        _buildStepButton(label: l10n.stepDetails, icon: Icons.arrow_forward_rounded, onPressed: _nextStep, isPrimary: true),
       ],
     );
   }
 
   Widget _buildStep1() {
-    final opted = _typeOptions.firstWhere((o) => o.type == _selectedType);
-    final vocab = _getVocabularyForType(_selectedType);
+    final l10n = AppLocalizations.of(context)!;
+    final typeOptions = _getTypeOptions(context);
+    final opted = typeOptions.firstWhere((o) => o.type == _selectedType);
+    final vocab = _getVocabularyForType(context, _selectedType);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('Medication Info', 'What should we call this medication?'),
+        _buildHeading(l10n.dosage, l10n.medicineName),
         const SizedBox(height: 32),
         _buildUltraPremiumField(
           controller: _nameCtrl,
-          label: 'Name (e.g., Panadol or Vitamin C)',
+          label: l10n.medicineName,
           icon: Icon(opted.icon, color: opted.color),
         ),
+        if (_selectedType == MedicineType.other) ...[
+          const SizedBox(height: 16),
+          _buildUltraPremiumField(
+            controller: _customTypeCtrl,
+            label: l10n.customMedicineTypeLabel,
+            icon: Icon(opted.icon, color: opted.color),
+          ),
+        ],
         const SizedBox(height: 16),
         Row(
           children: [
@@ -397,7 +414,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
               flex: 2,
               child: _buildUltraPremiumField(
                 controller: _unitCtrl,
-                label: 'Unit',
+                label: l10n.unit,
               ),
             ),
           ],
@@ -427,7 +444,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
         const SizedBox(height: 24),
         _buildUltraPremiumField(
           controller: _notesCtrl,
-          label: 'Any special notes? (e.g., Take after food)',
+          label: l10n.specialNotes,
           icon: const Icon(Icons.info_outline_rounded, color: AppTheme.textGrey),
           maxLines: 2,
         ),
@@ -438,7 +455,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
             const SizedBox(width: 16),
             Expanded(
               flex: 4, 
-              child: _buildStepButton(label: 'Next: Timers', icon: Icons.schedule_rounded, onPressed: _nameCtrl.text.isEmpty ? null : _nextStep, isPrimary: true)
+              child: _buildStepButton(label: l10n.tracker, icon: Icons.schedule_rounded, onPressed: _nameCtrl.text.isEmpty ? null : _nextStep, isPrimary: true)
             ),
           ],
         ),
@@ -447,12 +464,13 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
   }
 
   Widget _buildStep2() {
-    final vocab = _getVocabularyForType(_selectedType);
+    final l10n = AppLocalizations.of(context)!;
+    final vocab = _getVocabularyForType(context, _selectedType);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeading('When & How Many?', 'We will set up the alarms for you.'),
+        _buildHeading(l10n.frequencyQuestion, l10n.frequencyDesc),
         const SizedBox(height: 24),
         GlassCard(
           padding: const EdgeInsets.all(24),
@@ -466,7 +484,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(color: AppTheme.primaryGreen.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                    child: Text('$_timesPerDay Times', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                    child: Text(l10n.timesPerDayLabel(_timesPerDay), style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
                   )
                 ],
               ),
@@ -485,7 +503,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
                 ),
               ),
               const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Divider(height: 1, thickness: 1)),
-              const Text('At what times?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+              Text(l10n.atWhatTimes, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
               const SizedBox(height: 16),
               Column(
                 children: List.generate(_reminderTimes.length, (index) {
@@ -508,7 +526,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
                             child: const Icon(Icons.notifications_active_rounded, color: AppTheme.primaryGreen, size: 20),
                           ),
                           const SizedBox(width: 16),
-                          Text('Dose ${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                          Text(AppLocalizations.of(context)!.doseN(index + 1), style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
                           const Spacer(),
                           Text(
                             _reminderTimes[index].format(context),
@@ -538,7 +556,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
             Expanded(
               child: _buildUltraPremiumField(
                 controller: _lowAlertCtrl,
-                label: 'Refill warning at',
+                label: l10n.lowStockAlert,
                 icon: const Icon(Icons.warning_rounded, color: Colors.orange),
                 keyboardType: TextInputType.number,
               ),
@@ -556,7 +574,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
                 Expanded(
                   flex: 4,
                   child: _buildStepButton(
-                    label: 'Save & Activate',
+                    label: l10n.save,
                     icon: Icons.double_arrow_rounded,
                     onPressed: isLoading ? null : _save,
                     isPrimary: true,
@@ -647,10 +665,10 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> with SingleTicker
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-            SizedBox(width: 6),
-            Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          children: [
+            const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            const SizedBox(width: 6),
+            Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
       ),

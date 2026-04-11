@@ -2328,7 +2328,6 @@ extension MedicineModelQueryProperty
 
 MedicineModel _$MedicineModelFromJson(Map<String, dynamic> json) =>
     MedicineModel()
-      ..isarId = (json['isarId'] as num).toInt()
       ..id = json['id'] as String
       ..userId = json['userId'] as String?
       ..name = json['name'] as String
@@ -2344,7 +2343,6 @@ MedicineModel _$MedicineModelFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$MedicineModelToJson(MedicineModel instance) =>
     <String, dynamic>{
-      'isarId': instance.isarId,
       'id': instance.id,
       'userId': instance.userId,
       'name': instance.name,

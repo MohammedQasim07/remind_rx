@@ -20,7 +20,8 @@ class GenerateDoseHistoryUseCaseImpl implements GenerateDoseHistoryUseCase {
     DateTime current = schedule.startDate;
     
     // Ensure we start generating from the requested 'from' threshold
-    if (current.isBefore(from)) {
+    // We compare just the dates, or ignore the exact time so it generates the first day even if creation happens late in the day
+    if (current.isBefore(DateTime(from.year, from.month, from.day))) {
        current = from; 
     }
 
@@ -30,8 +31,8 @@ class GenerateDoseHistoryUseCaseImpl implements GenerateDoseHistoryUseCase {
 
     while (current.isBefore(effectiveEndDate) || current.isAtSameMomentAs(effectiveEndDate)) {
       
-      // Calculate the exact target time for this specific day based on the reminderTime conceptually
-      final scheduledTarget = DateTime.utc(
+      // Calculate the exact target time for this specific day (evaluating as Local to respect User's timezone)
+      final scheduledTarget = DateTime(
         current.year, 
         current.month, 
         current.day, 

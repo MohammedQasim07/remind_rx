@@ -2329,7 +2329,6 @@ extension ScheduleModelQueryProperty
 
 ScheduleModel _$ScheduleModelFromJson(Map<String, dynamic> json) =>
     ScheduleModel()
-      ..isarId = (json['isarId'] as num).toInt()
       ..id = json['id'] as String
       ..medicineId = json['medicineId'] as String
       ..userId = json['userId'] as String?
@@ -2349,7 +2348,6 @@ ScheduleModel _$ScheduleModelFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$ScheduleModelToJson(ScheduleModel instance) =>
     <String, dynamic>{
-      'isarId': instance.isarId,
       'id': instance.id,
       'medicineId': instance.medicineId,
       'userId': instance.userId,

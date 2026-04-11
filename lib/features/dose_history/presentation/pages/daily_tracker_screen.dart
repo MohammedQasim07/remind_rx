@@ -8,6 +8,7 @@ import '../bloc/dose_history_event.dart';
 import '../bloc/dose_history_state.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
 
 class DailyTrackerScreen extends StatefulWidget {
   final String userId;
@@ -27,27 +28,33 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
     context.read<DoseHistoryBloc>().add(LoadWeeklyDoseHistory(widget.userId));
   }
 
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: BlocBuilder<DoseHistoryBloc, DoseHistoryState>(
-        builder: (context, state) {
-          if (state is DoseHistoryLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is DoseHistoryLoaded) {
-            return _buildAnalyticsContent(context, state.dailyHistory);
-          } else if (state is DoseHistoryError) {
-            return Center(child: Text(state.message, style: const TextStyle(color: Colors.redAccent)));
-          }
-          return const SizedBox.shrink();
-        },
-      )),
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      decoration:
+          const BoxDecoration(gradient: AppTheme.meshBackgroundGradient),
+      child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(child: BlocBuilder<DoseHistoryBloc, DoseHistoryState>(
+            builder: (context, state) {
+              if (state is DoseHistoryLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is DoseHistoryLoaded) {
+                return _buildAnalyticsContent(context, state.dailyHistory);
+              } else if (state is DoseHistoryError) {
+                return Center(
+                    child: Text(state.message,
+                        style: const TextStyle(color: Colors.redAccent)));
+              }
+              return const SizedBox.shrink();
+            },
+          ))),
     );
   }
 
-  Widget _buildAnalyticsContent(BuildContext context, List<DoseHistory> history) {
+  Widget _buildAnalyticsContent(
+      BuildContext context, List<DoseHistory> history) {
+    final l10n = AppLocalizations.of(context)!;
     // 1. Process data for last 7 days chart (Always 7 days)
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -57,95 +64,131 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
     }
 
     for (var dose in history) {
-      final doseDay = DateTime(dose.scheduledTime.year, dose.scheduledTime.month, dose.scheduledTime.day);
+      final doseDay = DateTime(dose.scheduledTime.year,
+          dose.scheduledTime.month, dose.scheduledTime.day);
       final differenceInDays = todayStart.difference(doseDay).inDays;
-      
+
       if (differenceInDays >= 0 && differenceInDays <= 6) {
-        dailyStats[differenceInDays]!['total'] = dailyStats[differenceInDays]!['total']! + 1;
+        dailyStats[differenceInDays]!['total'] =
+            dailyStats[differenceInDays]!['total']! + 1;
         if (dose.status == DoseStatus.taken) {
-          dailyStats[differenceInDays]!['taken'] = dailyStats[differenceInDays]!['taken']! + 1;
+          dailyStats[differenceInDays]!['taken'] =
+              dailyStats[differenceInDays]!['taken']! + 1;
         }
       }
     }
 
     // 2. Filter data for the Stats & Insights cards based on selection
     List<DoseHistory> displayHistory = history;
-    String overviewTitle = "Weekly Overview";
+    String overviewTitle = l10n.weeklyOverview;
 
     if (_selectedDaysAgo != null) {
-      final selectedDate = todayStart.subtract(Duration(days: _selectedDaysAgo!));
-      displayHistory = history.where((h) => 
-        h.scheduledTime.year == selectedDate.year && 
-        h.scheduledTime.month == selectedDate.month && 
-        h.scheduledTime.day == selectedDate.day
-      ).toList();
+      final selectedDate =
+          todayStart.subtract(Duration(days: _selectedDaysAgo!));
+      displayHistory = history
+          .where((h) =>
+              h.scheduledTime.year == selectedDate.year &&
+              h.scheduledTime.month == selectedDate.month &&
+              h.scheduledTime.day == selectedDate.day)
+          .toList();
 
       if (_selectedDaysAgo == 0) {
-        overviewTitle = "Today's Overview";
+        overviewTitle = l10n.todayOverview;
       } else if (_selectedDaysAgo == 1) {
-        overviewTitle = "Yesterday's Overview";
+        overviewTitle = l10n.yesterdayOverview;
       } else {
-        overviewTitle = "${DateFormat('EEEE').format(selectedDate)}'s Overview";
+        overviewTitle = l10n.dayOverview(
+            DateFormat('EEEE', AppLocalizations.of(context)!.localeName)
+                .format(selectedDate));
       }
     }
 
     int totalScheduled = displayHistory.length;
-    int totalTaken = displayHistory.where((h) => h.status == DoseStatus.taken).length;
-    int totalSkippedOrMissed = displayHistory.where((h) => h.status == DoseStatus.skipped || h.status == DoseStatus.missed).length;
+    int totalTaken =
+        displayHistory.where((h) => h.status == DoseStatus.taken).length;
+    int totalSkippedOrMissed = displayHistory
+        .where((h) =>
+            h.status == DoseStatus.skipped || h.status == DoseStatus.missed)
+        .length;
     double adherence = totalScheduled > 0 ? (totalTaken / totalScheduled) : 0.0;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10).copyWith(bottom: 120),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)
+          .copyWith(bottom: 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // DATA HEADER INJECTION
           const SizedBox(height: 10),
           Center(
-            child: Column(
-              children: [
-                Text('Performance & Reports', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textGrey)),
-                Text('Health Compliance', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
-                const SizedBox(height: 32),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: CircularProgressIndicator(
-                        value: adherence,
-                        strokeWidth: 12,
-                        backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
-                        color: _getAdherenceColor(adherence),
-                        strokeCap: StrokeCap.round,
-                      ),
+            child: Column(children: [
+              Text(l10n.performance,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: AppTheme.textGrey)),
+              Text(l10n.healthCompliance,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDark,
+                      letterSpacing: -0.5)),
+              const SizedBox(height: 32),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: CircularProgressIndicator(
+                      value: adherence,
+                      strokeWidth: 12,
+                      backgroundColor: AppTheme.primaryGreen.withOpacity(0.1),
+                      color: _getAdherenceColor(adherence),
+                      strokeCap: StrokeCap.round,
                     ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('${(adherence * 100).toInt()}%', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: _getAdherenceColor(adherence))),
-                        Text('Compliance', style: TextStyle(fontSize: 12, color: AppTheme.textGrey)),
-                      ],
-                    )
-                  ],
-                ),
-              ]
-            ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('${(adherence * 100).toInt()}%',
+                          style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: _getAdherenceColor(adherence))),
+                      Text(l10n.compliance,
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textGrey)),
+                    ],
+                  )
+                ],
+              ),
+            ]),
           ),
           const SizedBox(height: 48),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Weekly Adherence', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+              Text(l10n.weeklyAdherence,
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDark,
+                      letterSpacing: -0.5)),
               if (_selectedDaysAgo != null)
                 GestureDetector(
                   onTap: () => setState(() => _selectedDaysAgo = null),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.textGrey.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                    child: const Text('Reset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: AppTheme.textGrey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Text(l10n.reset,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textGrey)),
                   ),
                 ),
             ],
@@ -154,14 +197,25 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
           _buildCustomBarChart(dailyStats, todayStart),
 
           const SizedBox(height: 36),
-          Text(overviewTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+          Text(overviewTitle,
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                  letterSpacing: -0.5)),
           const SizedBox(height: 16),
           _buildStatsRow(totalScheduled, totalTaken, totalSkippedOrMissed),
 
           const SizedBox(height: 36),
-          const Text('Actionable Insights', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark, letterSpacing: -0.5)),
+          Text(l10n.insights,
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textDark,
+                  letterSpacing: -0.5)),
           const SizedBox(height: 16),
-          _buildInsightCard(adherence, totalScheduled, _selectedDaysAgo != null),
+          _buildInsightCard(
+              adherence, totalScheduled, _selectedDaysAgo != null),
         ],
       ),
     );
@@ -174,34 +228,77 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
   }
 
   Widget _buildStatsRow(int total, int taken, int missed) {
+    final l10n = AppLocalizations.of(context)!;
     return GlassCard(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildStatItem('Taken', taken.toString(), AppTheme.primaryGreen, Icons.check_circle_rounded),
-          Container(height: 40, width: 1, color: AppTheme.textGrey.withOpacity(0.2)),
-          _buildStatItem('Missed', missed.toString(), Colors.orange, Icons.warning_rounded),
-          Container(height: 40, width: 1, color: AppTheme.textGrey.withOpacity(0.2)),
-          _buildStatItem('Total', total.toString(), Colors.blueAccent, Icons.medication_rounded),
+          _buildStatItem(l10n.takenToday, taken.toString(),
+              AppTheme.primaryGreen, Icons.check_circle_rounded),
+          Container(
+              height: 40, width: 1, color: AppTheme.textGrey.withOpacity(0.2)),
+          _buildStatItem(l10n.missed, missed.toString(), Colors.orange,
+              Icons.warning_rounded),
+          Container(
+              height: 40, width: 1, color: AppTheme.textGrey.withOpacity(0.2)),
+          _buildStatItem(l10n.total, total.toString(), Colors.blueAccent,
+              Icons.medication_rounded),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color, IconData icon) {
+  Widget _buildStatItem(
+      String label, String value, Color color, IconData icon) {
     return Column(
       children: [
         Icon(icon, color: color, size: 28),
         const SizedBox(height: 12),
-        Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color, letterSpacing: -0.5)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+                letterSpacing: -0.5)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.textGrey, fontWeight: FontWeight.w500)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.textGrey,
+                fontWeight: FontWeight.w500)),
       ],
     );
   }
 
-  Widget _buildCustomBarChart(Map<int, Map<String, int>> dailyStats, DateTime today) {
+  String _getLocalizedDayInitials(BuildContext context, DateTime date) {
+    final languageCode = AppLocalizations.of(context)!.localeName;
+    if (languageCode == 'ar') {
+      switch (date.weekday) {
+        case 1:
+          return 'إ'; // الاثنين
+        case 2:
+          return 'ث'; // الثلاثاء
+        case 3:
+          return 'أ'; // الأربعاء
+        case 4:
+          return 'خ'; // الخميس
+        case 5:
+          return 'ج'; // الجمعة
+        case 6:
+          return 'س'; // السبت
+        case 7:
+          return 'ح'; // الأحد
+        default:
+          return '';
+      }
+    } else {
+      return DateFormat('EE', 'en').format(date).substring(0, 1);
+    }
+  }
+
+  Widget _buildCustomBarChart(
+      Map<int, Map<String, int>> dailyStats, DateTime today) {
     return GlassCard(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -216,20 +313,26 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
                 final stats = dailyStats[daysAgo]!;
                 final total = stats['total']!;
                 final taken = stats['taken']!;
-                
+
                 double percentage = total > 0 ? (taken / total) : 0.0;
-                if (total == 0) percentage = 0.05; 
-                
+                if (total == 0) percentage = 0.05;
+
                 final date = today.subtract(Duration(days: daysAgo));
-                final dayLabel = DateFormat('EE').format(date).substring(0, 1);
+                final dayLabel = _getLocalizedDayInitials(context, date);
 
                 final bool isSelected = _selectedDaysAgo == daysAgo;
                 final bool hasSelection = _selectedDaysAgo != null;
 
                 // Color logic: if a day is selected, others are faded.
                 final gradientColors = (hasSelection && !isSelected)
-                    ? [Colors.grey.withOpacity(0.2), Colors.grey.withOpacity(0.4)]
-                    : [AppTheme.primaryGreen.withOpacity(0.5), AppTheme.primaryGreen];
+                    ? [
+                        Colors.grey.withOpacity(0.2),
+                        Colors.grey.withOpacity(0.4)
+                      ]
+                    : [
+                        AppTheme.primaryGreen.withOpacity(0.5),
+                        AppTheme.primaryGreen
+                      ];
 
                 return GestureDetector(
                   onTap: () {
@@ -255,9 +358,15 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
                             colors: gradientColors,
                           ),
                           borderRadius: BorderRadius.circular(8),
-                          boxShadow: isSelected ? [
-                            BoxShadow(color: AppTheme.primaryGreen.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 4))
-                          ] : null,
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                      color: AppTheme.primaryGreen
+                                          .withOpacity(0.5),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4))
+                                ]
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -265,8 +374,14 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
                         dayLabel,
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: (daysAgo == 0 || isSelected) ? FontWeight.bold : FontWeight.w600,
-                          color: isSelected ? AppTheme.primaryGreen : ((hasSelection) ? AppTheme.textGrey.withOpacity(0.5) : AppTheme.textDark),
+                          fontWeight: (daysAgo == 0 || isSelected)
+                              ? FontWeight.bold
+                              : FontWeight.w600,
+                          color: isSelected
+                              ? AppTheme.primaryGreen
+                              : ((hasSelection)
+                                  ? AppTheme.textGrey.withOpacity(0.5)
+                                  : AppTheme.textDark),
                         ),
                       ),
                     ],
@@ -281,31 +396,26 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
   }
 
   Widget _buildInsightCard(double adherence, int totalDoses, bool isSingleDay) {
-    String title = "Getting Started";
-    String subtitle = isSingleDay ? "No doses scheduled for this day." : "Set up some schedules to see insights here!";
+    final l10n = AppLocalizations.of(context)!;
+    String title = l10n.gettingStarted;
+    String subtitle = isSingleDay ? l10n.noDoses : l10n.createAccount;
     IconData icon = Icons.lightbulb_outline;
     Color color = Colors.blueAccent;
 
     if (totalDoses > 0) {
       if (adherence >= 0.9) {
-        title = isSingleDay ? "Perfect Day!" : "Incredible Job!";
-        subtitle = isSingleDay 
-          ? "You took every single medication scheduled for this day." 
-          : "You are taking your medication perfectly. Keep up the phenomenal consistency.";
+        title = isSingleDay ? l10n.perfectDay : l10n.incredibleJob;
+        subtitle = isSingleDay ? l10n.perfectDay : l10n.incredibleJob;
         icon = Icons.emoji_events_rounded;
         color = Colors.amber;
       } else if (adherence >= 0.6) {
-        title = isSingleDay ? "Almost Perfect!" : "Doing Good!";
-        subtitle = isSingleDay
-          ? "You missed a quick dose, but otherwise you were on track!"
-          : "You are on track but missed a few doses. Stay focused for a better health outcome.";
+        title = isSingleDay ? l10n.almostPerfect : l10n.doingGood;
+        subtitle = isSingleDay ? l10n.almostPerfect : l10n.doingGood;
         icon = Icons.thumb_up_alt_rounded;
         color = AppTheme.primaryGreen;
       } else {
-        title = isSingleDay ? "Tough Day" : "Needs Attention!";
-        subtitle = isSingleDay
-          ? "A lot of doses were missed on this day. Remember, consistency is key!"
-          : "Your adherence is low this week. Consider adjusting your reminder times if you're frequently busy.";
+        title = isSingleDay ? l10n.toughDay : l10n.needsAttention;
+        subtitle = isSingleDay ? l10n.toughDay : l10n.needsAttention;
         icon = Icons.warning_amber_rounded;
         color = Colors.orange;
       }
@@ -336,12 +446,14 @@ class _DailyTrackerScreenState extends State<DailyTrackerScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold, color: color),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 14, color: AppTheme.textGrey, height: 1.4),
+                  style: const TextStyle(
+                      fontSize: 14, color: AppTheme.textGrey, height: 1.4),
                 ),
               ],
             ),

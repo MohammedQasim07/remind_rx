@@ -53,3 +53,12 @@ class UpdateMedicine extends MedicineEvent {
   @override
   List<Object> get props => [medicine];
 }
+
+class RescheduleAllAlarms extends MedicineEvent {
+  final String userId;
+
+  const RescheduleAllAlarms(this.userId);
+
+  @override
+  List<Object> get props => [userId];
+}

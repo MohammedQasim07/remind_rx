@@ -5,6 +5,7 @@ import '../../../../features/medicine/presentation/pages/medicine_list_screen.da
 import 'dashboard_screen.dart';
 import '../../../dose_history/presentation/pages/daily_tracker_screen.dart';
 import '../../../../features/user/presentation/pages/settings_screen.dart';
+import 'package:remind_rx/l10n/app_localizations.dart';
 
 class MainLayoutScreen extends StatefulWidget {
   final String currentUserId;
@@ -33,6 +34,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       extendBody: true, // Crucial for floating nav over content
       body: Container(
@@ -72,10 +74,10 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard, 'Home'),
-                    _buildNavItem(1, Icons.analytics_outlined, Icons.analytics, 'Analytics'),
-                    _buildNavItem(2, Icons.medication_outlined, Icons.medication, 'Meds'),
-                    _buildNavItem(3, Icons.settings_outlined, Icons.settings, 'Settings'),
+                    _buildNavItem(0, Icons.dashboard_outlined, Icons.dashboard, l10n.home),
+                    _buildNavItem(1, Icons.analytics_outlined, Icons.analytics, l10n.analytics),
+                    _buildNavItem(2, Icons.medication_outlined, Icons.medication, l10n.meds),
+                    _buildNavItem(3, Icons.settings_outlined, Icons.settings, l10n.settings),
                   ],
                 ),
               ),
@@ -85,6 +87,7 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
       ),
     );
   }
+
 
   Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
     bool isSelected = _currentIndex == index;

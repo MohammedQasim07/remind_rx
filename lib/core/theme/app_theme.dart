@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Original Emerald Health Palette
@@ -11,6 +12,8 @@ class AppTheme {
   static const Color textGrey = Color(0xFF6B7C79);
 
   static ThemeData get lightTheme {
+    final textTheme = GoogleFonts.alexandriaTextTheme();
+    
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -22,24 +25,56 @@ class AppTheme {
         onSurface: textDark,
       ),
       scaffoldBackgroundColor: Colors.transparent, // Required for the Mesh Gradient behind screens
-      fontFamily: 'Inter',
-      textTheme: const TextTheme(
-        headlineMedium: TextStyle(fontWeight: FontWeight.w700, fontSize: 32, letterSpacing: -1.0, color: textDark),
-        titleLarge: TextStyle(fontWeight: FontWeight.w600, fontSize: 20, letterSpacing: -0.5, color: textDark),
-        titleMedium: TextStyle(fontWeight: FontWeight.w600, fontSize: 17, letterSpacing: -0.3, color: textDark),
-        bodyLarge: TextStyle(fontWeight: FontWeight.w400, fontSize: 17, color: textDark, letterSpacing: -0.1),
-        bodyMedium: TextStyle(fontWeight: FontWeight.w400, fontSize: 15, color: textGrey),
+      textTheme: textTheme.copyWith(
+        headlineMedium: GoogleFonts.alexandria(
+          textStyle: textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700, 
+            fontSize: 32, 
+            letterSpacing: -1.0, 
+            color: textDark
+          ),
+        ),
+        titleLarge: GoogleFonts.alexandria(
+          textStyle: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600, 
+            fontSize: 20, 
+            letterSpacing: -0.5, 
+            color: textDark
+          ),
+        ),
+        titleMedium: GoogleFonts.alexandria(
+          textStyle: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600, 
+            fontSize: 17, 
+            letterSpacing: -0.3, 
+            color: textDark
+          ),
+        ),
+        bodyLarge: GoogleFonts.alexandria(
+          textStyle: textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w400, 
+            fontSize: 17, 
+            color: textDark, 
+            letterSpacing: -0.1
+          ),
+        ),
+        bodyMedium: GoogleFonts.alexandria(
+          textStyle: textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w400, 
+            fontSize: 15, 
+            color: textGrey
+          ),
+        ),
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: textDark),
-        titleTextStyle: TextStyle(
+        iconTheme: const IconThemeData(color: textDark),
+        titleTextStyle: GoogleFonts.alexandria(
           color: textDark,
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          fontFamily: 'Inter',
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -49,13 +84,15 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 2,
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.alexandria(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        labelStyle: GoogleFonts.alexandria(color: textGrey),
+        hintStyle: GoogleFonts.alexandria(color: textGrey.withOpacity(0.5)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,

@@ -27,30 +27,48 @@ class DoseHistoryRepositoryImpl implements DoseHistoryRepository {
 
   @override
   Future<List<DoseHistory>> getDoseHistoryForSchedule(String scheduleId) async {
+    final localModels = await localDataSource.getDoseHistoryForSchedule(scheduleId);
+    if (localModels.isNotEmpty) {
+      _backgroundSyncSchedule(scheduleId);
+      return localModels.map((m) => m.toEntity()).toList();
+    }
     try {
-      final remoteModels = await remoteDataSource.getDoseHistory(medicineId: scheduleId); // Simplified query
-      for (var model in remoteModels) {
-        await localDataSource.saveDoseHistory(model);
-      }
+      final remoteModels = await remoteDataSource.getDoseHistory(medicineId: scheduleId);
+      await localDataSource.saveManyDoseHistories(remoteModels);
       return remoteModels.map((m) => m.toEntity()).toList();
     } catch (e) {
-      final models = await localDataSource.getDoseHistoryForSchedule(scheduleId);
-      return models.map((m) => m.toEntity()).toList();
+      return localModels.map((m) => m.toEntity()).toList();
     }
+  }
+
+  void _backgroundSyncSchedule(String scheduleId) async {
+    try {
+       final remoteModels = await remoteDataSource.getDoseHistory(medicineId: scheduleId);
+       await localDataSource.saveManyDoseHistories(remoteModels);
+    } catch (_) {}
   }
 
   @override
   Future<List<DoseHistory>> getDoseHistoryForUser(String userId, DateTime from, DateTime to) async {
+    final localModels = await localDataSource.getDoseHistoryForUser(userId, from, to);
+    if (localModels.isNotEmpty) {
+      _backgroundSyncUser(userId);
+      return localModels.map((m) => m.toEntity()).toList();
+    }
     try {
       final remoteModels = await remoteDataSource.getDoseHistory(userId: userId);
-      for (var model in remoteModels) {
-        await localDataSource.saveDoseHistory(model);
-      }
+      await localDataSource.saveManyDoseHistories(remoteModels);
       return remoteModels.map((m) => m.toEntity()).toList();
     } catch (e) {
-      final models = await localDataSource.getDoseHistoryForUser(userId, from, to);
-      return models.map((m) => m.toEntity()).toList();
+      return localModels.map((m) => m.toEntity()).toList();
     }
+  }
+
+  void _backgroundSyncUser(String userId) async {
+    try {
+       final remoteModels = await remoteDataSource.getDoseHistory(userId: userId);
+       await localDataSource.saveManyDoseHistories(remoteModels);
+    } catch (_) {}
   }
 
   @override
@@ -67,18 +85,35 @@ class DoseHistoryRepositoryImpl implements DoseHistoryRepository {
   }
 
   @override
+  Future<void> saveManyDoseHistories(List<DoseHistory> histories) async {
+    final models = histories.map((e) => DoseHistoryModel.fromEntity(e)).toList();
+    
+    // 1. Instantly save all to local DB to keep the UI blazingly fast
+    await localDataSource.saveManyDoseHistories(models);
+    
+    // 2. Fire and forget remote creation asynchronously so user doesn't wait
+    Future.wait(models.map((model) async {
+      try {
+        await remoteDataSource.createDoseHistory(model);
+      } catch (e) {
+        print('Background Sync Error creating dose: $e');
+      }
+    }));
+  }
+
+  @override
   Future<void> updateDoseHistoryStatus(String id, DoseStatus status, DateTime? actualTime) async {
     final model = await localDataSource.getDoseHistoryById(id);
-    if (model != null) {
+    if (model != null && model.status != status) {
       model.status = status;
       model.actualTime = actualTime;
-      try {
-        await remoteDataSource.updateDoseHistory(model.id, model);
-        await localDataSource.saveDoseHistory(model);
-      } catch (e) {
-        print('Network Error updating dose history, syncing later: $e');
-        await localDataSource.saveDoseHistory(model);
-      }
+      // Instantly save to local DB
+      await localDataSource.saveDoseHistory(model);
+      
+      // Background sync to remote
+      remoteDataSource.updateDoseHistory(model.id, model).catchError((e) {
+        print('Network Error updating dose history sync: $e');
+      });
     }
   }
 
