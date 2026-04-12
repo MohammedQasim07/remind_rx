@@ -6,6 +6,7 @@ import 'dashboard_screen.dart';
 import '../../../dose_history/presentation/pages/daily_tracker_screen.dart';
 import '../../../../features/user/presentation/pages/settings_screen.dart';
 import 'package:remind_rx/l10n/app_localizations.dart';
+import '../../../../core/services/notification_service.dart';
 
 class MainLayoutScreen extends StatefulWidget {
   final String currentUserId;
@@ -30,6 +31,11 @@ class _MainLayoutScreenState extends State<MainLayoutScreen> {
       MedicineListScreen(currentUserId: widget.currentUserId),
       SettingsScreen(currentUserId: widget.currentUserId),
     ];
+    
+    // Request notification permissions after UI is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService().requestPermissions();
+    });
   }
 
   @override

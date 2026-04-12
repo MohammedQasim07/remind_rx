@@ -15,15 +15,14 @@ class NotificationService {
   bool _isEnabled = true;
   bool get isEnabled => _isEnabled;
 
-  Future<void> init() async {
+  Future<void> initializePlugin() async {
     tz.initializeTimeZones();
-    // In a real app, you would get the device's local timezone
+    // Default location to UTC to avoid crashes on some devices
     tz.setLocalLocation(tz.getLocation('UTC'));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Add iOS settings if needed
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
     );
@@ -32,7 +31,9 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+  }
 
+  Future<void> requestPermissions() async {
     // Request permissions for Android 13+
     await _notificationsPlugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();

@@ -55,16 +55,24 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 1. Initialize Timezones
   TimezoneHelper.init();
-  // 2. Initialize Notifications
+  // 2. Initialize Notifications (Plugin only, no permission dialog yet)
   final notificationService = NotificationService();
-  await notificationService.init();
+  await notificationService.initializePlugin();
 
-  // 3. Initialize Local Database (Isar)
-  final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open(
-    [UserModelSchema, MedicineModelSchema, ScheduleModelSchema, DoseHistoryModelSchema],
-    directory: dir.path,
-  );
+  // 3. Initialize Local Database (Isar) with extra safety
+  late final Isar isar;
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    isar = await Isar.open(
+      [UserModelSchema, MedicineModelSchema, ScheduleModelSchema, DoseHistoryModelSchema],
+      directory: dir.path,
+    );
+  } catch (e) {
+    debugPrint('Critical Error: Failed to open Isar database: $e');
+    // In a production app, you might want to show a recovery screen or use a fallback.
+    // For now, we will rethrow to see the error in development, but it's isolated.
+    rethrow;
+  }
 
   // 4. Setup dependency injection
   final dio = Dio();
