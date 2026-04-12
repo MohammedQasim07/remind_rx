@@ -6,6 +6,13 @@
 -keep class io.flutter.embedding.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# Preserve generic signatures and annotations for GSON/Reflection
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+
+
 # Isar Database Keep Rules
 -keep class io.isar.** { *; }
 -keep enum io.isar.** { *; }
@@ -26,6 +33,17 @@
 -keep class retrofit2.** { *; }
 -keep class okhttp3.** { *; }
 -keep class com.google.gson.** { *; }
+-keep class * extends com.google.gson.TypeAdapter
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+-keepclassmembers,allowobfuscation class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Flutter Local Notifications (uses Gson)
+-keep class com.dexterous.** { *; }
+
 
 # Flutter Secure Storage
 -keep class com.it_verify.flutter_secure_storage.** { *; }
